@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParQHub - Manage Table</title>
+
+    <!-- Google Fonts (Poppins) -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #0a0f1c;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, #ffb703, #ff6600);
+            color: #0a0f1c;
+            font-weight: 600;
+            border-radius: 8px;
+            padding: 8px 16px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 183, 3, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(90deg, #34a853, #1c8c3e);
+            color: #0a0f1c;
+            font-weight: 600;
+            border-radius: 8px;
+            padding: 8px 16px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(52, 168, 83, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(90deg, #d93025, #b0281a);
+            color: #ffffff;
+            font-weight: 600;
+            border-radius: 8px;
+            padding: 8px 16px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(217, 48, 37, 0.3);
+        }
+
+        .btn-warning {
+            background: linear-gradient(90deg, #f4b400, #d89e00);
+            color: #0a0f1c;
+            font-weight: 600;
+            border-radius: 8px;
+            padding: 8px 16px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(244, 180, 0, 0.3);
+        }
+
+        .table-header {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .table-row {
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .table-row:hover {
+            background: rgba(255, 183, 3, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-available { background: rgba(52, 168, 83, 0.2); color: #34a853; }
+        .status-booked { background: rgba(244, 180, 0, 0.2); color: #f4b400; }
+        .status-occupied { background: rgba(217, 48, 37, 0.2); color: #d93025; }
+        .status-pending { background: rgba(26, 115, 232, 0.2); color: #1a73e8; }
+        .status-completed { background: rgba(52, 168, 83, 0.2); color: #34a853; }
+        .status-failed { background: rgba(217, 48, 37, 0.2); color: #d93025; }
+
+        .form-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            border-radius: 8px;
+            padding: 8px 12px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-input:focus {
+            border-color: #ffb703;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(255, 183, 3, 0.3);
+        }
+
+        .sidebar-link {
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            border-radius: 8px;
+            padding: 8px 12px;
+        }
+
+        .sidebar-link:hover {
+            background: rgba(255, 183, 3, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .sidebar-link.active {
+            background: linear-gradient(90deg, #ffb703, #ff6600);
+            color: #0a0f1c;
+            font-weight: 600;
+        }
+
+        .modal-backdrop {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+        }
+
+        .action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .relationship-info {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            padding: 8px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body class="flex overflow-hidden">
+<!-- Sidebar -->
+<aside class="w-72 h-screen glass flex flex-col fixed">
+    <div class="p-6 flex items-center gap-3 border-b border-gray-700">
+        <img src="/images/logo.svg" alt="ParQHub" class="h-10">
+        <span class="text-2xl font-bold">ParQHub</span>
+    </div>
+    <nav class="flex-1 p-4 space-y-2">
+        <a href="/admin/dashboard" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 transition"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="/admin/tables" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 transition active"><i class="fas fa-table"></i> Table View</a>
+        <a href="/admin/parking-viewer" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 transition"><i class="fas fa-parking"></i> Parking Viewer</a>
+        <a href="/admin/reports" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-chart-bar"></i> Report View</a>
+
+        <!-- Role-based Links -->
+        <div th:if="${adminRole.name() == 'OPERATIONS_MANAGER'}">
+            <a href="/admin/slot-availability" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-parking"></i> Slot Availability</a>
+            <a href="/admin/staff-assignment" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-user-cog"></i> Staff Assignment</a>
+            <a href="/admin/performance-summaries" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-chart-line"></i> Performance Summaries</a>
+            <a href="/admin/live-slot-usage" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-tachometer-alt"></i> Live Slot Usage</a>
+        </div>
+        <div th:if="${adminRole.name() == 'CUSTOMER_SERVICE_OFFICER'}">
+            <a href="/admin/booking-details" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-ticket-alt"></i> Booking Details</a>
+            <a href="/admin/incident-logging" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-exclamation-triangle"></i> Incident Logging</a>
+            <a href="/admin/system-alerts" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-bell"></i> System Alerts</a>
+            <a href="/admin/complaint-history" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-history"></i> Complaint History</a>
+        </div>
+        <div th:if="${adminRole.name() == 'IT_SUPPORT'}">
+            <a href="/admin/backend-configurations" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-cogs"></i> Backend Configurations</a>
+            <a href="/admin/system-uptime" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-server"></i> System Uptime</a>
+            <a href="/admin/password-reset" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-key"></i> Password Reset</a>
+            <a href="/admin/error-logs" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-bug"></i> Error Logs</a>
+        </div>
+        <div th:if="${adminRole.name() == 'FINANCE_OFFICER'}">
+            <a href="/admin/financial-reports" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-file-invoice-dollar"></i> Financial Reports</a>
+            <a href="/admin/transaction-history" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-history"></i> Transaction History</a>
+            <a href="/admin/revenue-breakdown" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-chart-pie"></i> Revenue Breakdown</a>
+            <a href="/admin/export-reports" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-file-export"></i> Export Reports</a>
+        </div>
+        <div th:if="${adminRole.name() == 'SECURITY_SUPERVISOR'}">
+            <a href="/admin/vehicle-registration" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-car"></i> Vehicle Registration</a>
+            <a href="/admin/overstay-alerts" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-bell"></i> Overstay Alerts</a>
+            <a href="/admin/unauthorized-vehicles" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-flag"></i> Unauthorized Vehicles</a>
+            <a href="/admin/vehicle-movement-logs" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-clipboard-list"></i> Vehicle Movement Logs</a>
+        </div>
+        <div th:if="${adminRole.name() == 'SUPER_ADMIN'}">
+            <a href="/admin/super-admin-panel" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 font-bold"><i class="fas fa-crown"></i> Super Admin Panel</a>
+        </div>
+    </nav>
+    <div class="p-4 border-t border-gray-700">
+        <a th:href="@{/admin/logout}" class="flex items-center gap-3 p-3 rounded-lg hover:bg-red-500/30 text-red-400"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+</aside>
+
+<!-- Main Content -->
+<main class="ml-72 w-full p-6 min-h-screen overflow-y-auto">
+    <!-- Top Bar -->
+    <div class="flex justify-between items-center mb-6">
+        <div class="flex items-center gap-4">
+            <a href="/admin/tables" class="btn-primary px-4 py-2 rounded-lg transition-all" title="Back to Tables">
+                <i class="fas fa-arrow-left mr-2"></i>Back to Tables
+            </a>
+            <div>
+                <h1 class="text-2xl font-bold">Manage <span th:text="${tableName}">Table</span></h1>
+                <p class="text-sm text-gray-400">Data management interface</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="openAddModal()" class="btn-success px-4 py-2 rounded-lg transition-all">
+                <i class="fas fa-plus mr-2"></i>Add Record
+            </button>
+            <button onclick="refreshTable()" class="btn-primary px-4 py-2 rounded-lg transition-all">
+                <i class="fas fa-sync-alt mr-2"></i>Refresh
+            </button>
+            <div class="flex items-center gap-2 glass px-3 py-2 rounded-lg">
+                <span class="text-sm text-gray-400">Welcome,</span>
+                <span class="font-semibold" th:text="${adminName}">Admin</span>
+                <img src="/images/admin-avatar.png" alt="Admin" class="h-8 w-8 rounded-full border-2 border-yellow-400">
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div th:if="${success}" class="glass border-l-4 border-green-500 bg-green-500/10 text-green-400 px-4 py-3 rounded-lg mb-6">
+        <div class="flex items-center">
+            <i class="fas fa-check-circle mr-2"></i>
+            <span th:text="${success}">Success message</span>
+        </div>
+    </div>
+    <div th:if="${error}" class="glass border-l-4 border-red-500 bg-red-500/10 text-red-400 px-4 py-3 rounded-lg mb-6">
+        <div class="flex items-center">
+            <i class="fas fa-exclamation-circle mr-2"></i>
+            <span th:text="${error}">Error message</span>
+        </div>
+    </div>
+
+    <!-- Search and Filter Bar -->
+    <div class="glass p-4 rounded-lg mb-6">
+        <div class="flex flex-wrap gap-3 items-center">
+            <div class="flex-1 min-w-[200px]">
+                <div class="relative">
+                    <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" id="searchInput" placeholder="Search..." th:value="${searchTerm}"
+                           class="form-input w-full pl-10 pr-3 py-2 rounded-lg">
+                </div>
+            </div>
+            <button onclick="searchTable()" class="btn-primary px-4 py-2 rounded-lg">
+                <i class="fas fa-search mr-2"></i>Search
+            </button>
+            <button onclick="clearSearch()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">
+                <i class="fas fa-times mr-2"></i>Clear
+            </button>
+            <button onclick="exportData()" class="btn-warning px-4 py-2 rounded-lg">
+                <i class="fas fa-download mr-2"></i>Export
+            </button>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="glass rounded-lg overflow-hidden">
+        <div class="overflow-x-auto max-h-[calc(100vh-300px)] overflow-y-auto">
+            <table class="w-full">
+                <thead class="table-header">
+                <tr>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-hashtag mr-1"></i>ID
+                    </th>
+
+                    <!-- Admins Table Headers -->
+                    <th th:if="${tableName == 'admins'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-user mr-1"></i>Name
+                    </th>
+                    <th th:if="${tableName == 'admins'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-envelope mr-1"></i>Email
+                    </th>
+                    <th th:if="${tableName == 'admins'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-user-tag mr-1"></i>Role
+                    </th>
+
+                    <!-- Users Table Headers -->
+                    <th th:if="${tableName == 'users'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-user mr-1"></i>Name
+                    </th>
+                    <th th:if="${tableName == 'users'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-envelope mr-1"></i>Email
+                    </th>
+                    <th th:if="${tableName == 'users'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-phone mr-1"></i>Contact
+                    </th>
+
+                    <!-- Vehicle Table Headers -->
+                    <th th:if="${tableName == 'vehicle'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-user mr-1"></i>Owner
+                    </th>
+                    <th th:if="${tableName == 'vehicle'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-car mr-1"></i>Vehicle No
+                    </th>
+                    <th th:if="${tableName == 'vehicle'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-list mr-1"></i>Type
+                    </th>
+                    <th th:if="${tableName == 'vehicle'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-industry mr-1"></i>Brand
+                    </th>
+                    <th th:if="${tableName == 'vehicle'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-car-side mr-1"></i>Model
+                    </th>
+                    <th th:if="${tableName == 'vehicle'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-palette mr-1"></i>Color
+                    </th>
+
+                    <!-- ParkingLot Table Headers -->
+                    <th th:if="${tableName == 'parkinglot'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-city mr-1"></i>City
+                    </th>
+                    <th th:if="${tableName == 'parkinglot'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-map-marker-alt mr-1"></i>Location
+                    </th>
+                    <th th:if="${tableName == 'parkinglot'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-parking mr-1"></i>Total Slots
+                    </th>
+                    <th th:if="${tableName == 'parkinglot'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-dollar-sign mr-1"></i>Price/Hour
+                    </th>
+
+                    <!-- ParkingSlot Table Headers -->
+                    <th th:if="${tableName == 'parkingslot'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-building mr-1"></i>Parking Lot Info
+                    </th>
+                    <th th:if="${tableName == 'parkingslot'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-signal mr-1"></i>Status
+                    </th>
+
+                    <!-- Booking Table Headers -->
+                    <th th:if="${tableName == 'booking'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-user mr-1"></i>Customer
+                    </th>
+                    <th th:if="${tableName == 'booking'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-car mr-1"></i>Vehicle
+                    </th>
+                    <th th:if="${tableName == 'booking'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-parking mr-1"></i>Parking Slot
+                    </th>
+                    <th th:if="${tableName == 'booking'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-clock mr-1"></i>Start Time
+                    </th>
+                    <th th:if="${tableName == 'booking'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-clock mr-1"></i>End Time
+                    </th>
+                    <th th:if="${tableName == 'booking'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-credit-card mr-1"></i>Payment Status
+                    </th>
+
+                    <!-- Payment Table Headers -->
+                    <th th:if="${tableName == 'payment'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-receipt mr-1"></i>Booking
+                    </th>
+                    <th th:if="${tableName == 'payment'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-dollar-sign mr-1"></i>Amount
+                    </th>
+                    <th th:if="${tableName == 'payment'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-credit-card mr-1"></i>Method
+                    </th>
+                    <th th:if="${tableName == 'payment'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-check-circle mr-1"></i>Status
+                    </th>
+                    <th th:if="${tableName == 'payment'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-calendar mr-1"></i>Timestamp
+                    </th>
+
+                    <!-- Notification Table Headers -->
+                    <th th:if="${tableName == 'notification'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-tag mr-1"></i>Type
+                    </th>
+                    <th th:if="${tableName == 'notification'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-align-left mr-1"></i>Description
+                    </th>
+                    <th th:if="${tableName == 'notification'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-user mr-1"></i>User
+                    </th>
+                    <th th:if="${tableName == 'notification'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-user-shield mr-1"></i>Admin
+                    </th>
+                    <th th:if="${tableName == 'notification'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-calendar mr-1"></i>Timestamp
+                    </th>
+
+                    <!-- VehicleLog Table Headers -->
+                    <th th:if="${tableName == 'vehiclelog'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-car mr-1"></i>Vehicle
+                    </th>
+                    <th th:if="${tableName == 'vehiclelog'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-building mr-1"></i>Parking Lot
+                    </th>
+                    <th th:if="${tableName == 'vehiclelog'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-sign-in-alt mr-1"></i>Entry Time
+                    </th>
+                    <th th:if="${tableName == 'vehiclelog'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-sign-out-alt mr-1"></i>Exit Time
+                    </th>
+
+                    <!-- Report Table Headers -->
+                    <th th:if="${tableName == 'report'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-chart-bar mr-1"></i>Type
+                    </th>
+                    <th th:if="${tableName == 'report'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-calendar mr-1"></i>Generated Date
+                    </th>
+                    <th th:if="${tableName == 'report'}" class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-user-shield mr-1"></i>Admin
+                    </th>
+
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <i class="fas fa-cogs mr-1"></i>Actions
+                    </th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-700">
+                <tr th:each="item : ${items}" th:if="${tableName == 'admins'}" class="table-row">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-yellow-400" th:text="${item.id}">1</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300" th:text="${item.name}">Admin Name</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300" th:text="${item.email}">admin@example.com</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300" th:text="${item.role}">SUPER_ADMIN</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold">
+                        <div class="flex gap-2">
+                            <button th:onclick="'editItem(' + ${item.id} + ')'" class="action-btn btn-warning">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button th:onclick="'viewDetails(' + ${item.id} + ')'" class="action-btn btn-primary">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button th:onclick="'deleteItem(' + ${item.id} + ')'" class="action-btn btn-danger">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:each="item : ${items}" th:if="${tableName == 'users'}" class="table-row">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-yellow-400" th:text="${item.id}">1</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300" th:text="${item.name}">User Name</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300" th:text="${item.email}">user@example.com</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300" th:text="${item.contactNo}">+1234567890</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold">
+                        <div class="flex gap-2">
+                            <button th:onclick="'editItem(' + ${item.id} + ')'" class="action-btn btn-warning">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button th:onclick="'viewDetails(' + ${item.id} + ')'" class="action-btn btn-primary">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button th:onclick="'deleteItem(' + ${item.id} + ')'" class="action-btn btn-danger">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:each="item : ${items}" th:if="${tableName == 'vehicle'}" class="table-row">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-yellow-400" th:text="${item.id}">1</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300" th:text="${item.vehicleNo}">ABC-1234</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300" th:text="${item.vehicleType}">Car</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300" th:text="${item.brand}">Toyota</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300" th:text="${item.model}">Camry</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300" th:text="${item.color}">Blue</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold">
+                        <div class="flex gap-2">
+                            <button th:onclick="'editItem(' + ${item.id} + ')'" class="action-btn btn-warning">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button th:onclick="'viewDetails(' + ${item.id} + ')'" class="action-btn btn-primary">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button th:onclick="'deleteItem(' + ${item.id} + ')'" class="action-btn btn-danger">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:each="item : ${items}" th:if="${tableName == 'parkinglot'}" class="table-row">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-yellow-400" th:text="${item.id}">1</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300" th:text="${item.city}">New York</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300" th:text="${item.location}">5th Avenue</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300" th:text="${item.totalSlots}">50</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300" th:text="${#numbers.formatDecimal(item.priceHr, 1, 'COMMA', 2, 'POINT')}">10.00</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold">
+                        <div class="flex gap-2">
+                            <button th:onclick="'editItem(' + ${item.id} + ')'" class="action-btn btn-warning">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button th:onclick="'viewDetails(' + ${item.id} + ')'" class="action-btn btn-primary">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button th:onclick="'deleteItem(' + ${item.id} + ')'" class="action-btn btn-danger">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:each="item : ${items}" th:if="${tableName == 'parkingslot'}" class="table-row">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-yellow-400" th:text="${item.id}">1</td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="relationship-info">
+                            <div class="text-sm text-gray-300 font-semibold" th:text="${item.parkingLot?.id ?: 'N/A'}">1</div>
+                            <div class="text-xs text-gray-400" th:text="${item.parkingLot?.city ?: 'Unknown'}">Colombo</div>
+                            <div class="text-xs text-gray-400" th:text="${item.parkingLot?.location ?: 'Unknown'}">City Center</div>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <span class="status-badge"
+                              th:classappend="${item.status == 'AVAILABLE' ? 'status-available' : (item.status == 'BOOKED' ? 'status-booked' : 'status-occupied')}"
+                              th:text="${item.status}">AVAILABLE</span>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold">
+                        <div class="flex gap-2">
+                            <button th:onclick="'editItem(' + ${item.id} + ')'" class="action-btn btn-warning">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button th:onclick="'viewDetails(' + ${item.id} + ')'" class="action-btn btn-primary">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button th:onclick="'deleteItem(' + ${item.id} + ')'" class="action-btn btn-danger">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:each="item : ${items}" th:if="${tableName == 'booking'}" class="table-row">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-yellow-400" th:text="${item.id}">1</td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="relationship-info">
+                            <div class="text-sm text-gray-300 font-semibold" th:text="${item.user?.id ?: 'N/A'}">1</div>
+                            <div class="text-xs text-gray-400" th:text="${item.user?.name ?: 'Unknown'}">User Name</div>
+                            <div class="text-xs text-gray-400" th:text="${item.user?.email ?: 'No Email'}">user@email.com</div>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="relationship-info">
+                            <div class="text-sm text-gray-300 font-semibold" th:text="${item.vehicle?.vehicleNo ?: 'Unknown Vehicle'}">ABC-1234</div>
+                            <div class="text-xs text-gray-400" th:text="${item.vehicle?.id ?: 'N/A'}">1</div>
+                            <div class="text-xs text-gray-400" th:text="${item.vehicle?.user?.name ?: 'Unknown'}">User Name</div>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="relationship-info">
+                            <div class="text-sm text-gray-300 font-semibold" th:text="${item.parkingSlot?.id ?: 'N/A'}">1</div>
+                            <div class="text-xs text-gray-400" th:text="${item.parkingSlot?.parkingLot?.city ?: 'Unknown'}">Colombo</div>
+                            <div class="text-xs text-gray-400" th:text="${item.parkingSlot?.parkingLot?.location ?: 'Unknown'}">City Center</div>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300" th:text="${#temporals.format(item.startTime, 'yyyy-MM-dd HH:mm')}">2024-01-01 10:00</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300" th:text="${#temporals.format(item.endTime, 'yyyy-MM-dd HH:mm')}">2024-01-01 12:00</td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <span class="status-badge"
+                              th:classappend="${item.paymentStatus == 'Completed' ? 'status-completed' : (item.paymentStatus == 'Pending' ? 'status-pending' : 'status-failed')}"
+                              th:text="${item.paymentStatus}">Pending</span>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold">
+                        <div class="flex gap-2">
+                            <button th:onclick="'editItem(' + ${item.id} + ')'" class="action-btn btn-warning">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button th:onclick="'viewDetails(' + ${item.id} + ')'" class="action-btn btn-primary">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button th:onclick="'deleteItem(' + ${item.id} + ')'" class="action-btn btn-danger">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:each="item : ${items}" th:if="${tableName == 'payment'}" class="table-row">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-yellow-400" th:text="${item.id}">1</td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="relationship-info">
+                            <div class="text-sm text-gray-300 font-semibold" th:text="${item.booking?.id ?: 'N/A'}">1</div>
+                            <div class="text-xs text-gray-400" th:text="${item.booking?.user?.name ?: 'Unknown'}">User Name</div>
+                            <div class="text-xs text-gray-400" th:text="${item.booking?.vehicle?.vehicleNo ?: 'Unknown'}">ABC-1234</div>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300" th:text="'LKR ' + ${#numbers.formatDecimal(item.amount, 1, 'COMMA', 2, 'POINT')}">LKR 100.00</td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <span class="status-badge status-available" th:text="${item.method}">Credit Card</span>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <span class="status-badge"
+                              th:classappend="${item.status == 'Completed' ? 'status-completed' : (item.status == 'Pending' ? 'status-pending' : 'status-failed')}"
+                              th:text="${item.status}">Completed</span>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300" th:text="${#temporals.format(item.timestamp, 'yyyy-MM-dd HH:mm')}">2024-01-01 10:00</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold">
+                        <div class="flex gap-2">
+                            <button th:onclick="'editItem(' + ${item.id} + ')'" class="action-btn btn-warning">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button th:onclick="'viewDetails(' + ${item.id} + ')'" class="action-btn btn-primary">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button th:onclick="'deleteItem(' + ${item.id} + ')'" class="action-btn btn-danger">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:each="item : ${items}" th:if="${tableName == 'notification'}" class="table-row">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-yellow-400" th:text="${item.id}">1</td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <span class="status-badge"
+                              th:classappend="${item.type == 'FULL_SLOT' ? 'status-booked' : (item.type == 'OVERSTAY' ? 'status-failed' : 'status-occupied')}"
+                              th:text="${item.type}">Full Slot</span>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300 max-w-xs truncate" th:text="${item.description}">Parking lot is full</td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="relationship-info" th:if="${item.user}">
+                            <div class="text-sm text-gray-300 font-semibold" th:text="${item.user?.name ?: 'N/A'}">User Name</div>
+                            <div class="text-xs text-gray-400" th:text="${item.user?.id ?: 'N/A'}">1</div>
+                            <div class="text-xs text-gray-400" th:text="${item.user?.email ?: 'No Email'}">user@email.com</div>
+                        </div>
+                        <span th:unless="${item.user}" class="text-gray-400 text-sm">No User</span>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="relationship-info" th:if="${item.admin}">
+                            <div class="text-sm text-gray-300 font-semibold" th:text="${item.admin?.name ?: 'N/A'}">Admin Name</div>
+                            <div class="text-xs text-gray-400" th:text="${item.admin?.id ?: 'N/A'}">1</div>
+                            <div class="text-xs text-gray-400" th:text="${item.admin?.role ?: 'No Role'}">SUPER_ADMIN</div>
+                        </div>
+                        <span th:unless="${item.admin}" class="text-gray-400 text-sm">No Admin</span>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300" th:text="${#temporals.format(item.timestamp, 'yyyy-MM-dd HH:mm')}">2024-01-01 10:00</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold">
+                        <div class="flex gap-2">
+                            <button th:onclick="'editItem(' + ${item.id} + ')'" class="action-btn btn-warning">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button th:onclick="'viewDetails(' + ${item.id} + ')'" class="action-btn btn-primary">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button th:onclick="'deleteItem(' + ${item.id} + ')'" class="action-btn btn-danger">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:each="item : ${items}" th:if="${tableName == 'vehiclelog'}" class="table-row">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-yellow-400" th:text="${item.id}">1</td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="relationship-info">
+                            <div class="text-sm text-gray-300 font-semibold" th:text="${item.vehicle?.vehicleNo ?: 'Unknown Vehicle'}">ABC-1234</div>
+                            <div class="text-xs text-gray-400" th:text="${item.vehicle?.id ?: 'N/A'}">1</div>
+                            <div class="text-xs text-gray-400" th:text="${item.vehicle?.user?.name ?: 'Unknown'}">User Name</div>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="relationship-info">
+                            <div class="text-sm text-gray-300 font-semibold" th:text="${item.parkingLot?.id ?: 'N/A'}">1</div>
+                            <div class="text-xs text-gray-400" th:text="${item.parkingLot?.city ?: 'Unknown'}">Colombo</div>
+                            <div class="text-xs text-gray-400" th:text="${item.parkingLot?.location ?: 'Unknown'}">City Center</div>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300" th:text="${#temporals.format(item.entryTime, 'yyyy-MM-dd HH:mm')}">2024-01-01 10:00</td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div th:if="${item.exitTime}" class="text-sm text-gray-300" th:text="${#temporals.format(item.exitTime, 'yyyy-MM-dd HH:mm')}">2024-01-01 12:00</div>
+                        <div th:unless="${item.exitTime}" class="text-sm text-yellow-400">Still Parked</div>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold">
+                        <div class="flex gap-2">
+                            <button th:onclick="'editItem(' + ${item.id} + ')'" class="action-btn btn-warning">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button th:onclick="'viewDetails(' + ${item.id} + ')'" class="action-btn btn-primary">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button th:onclick="'deleteItem(' + ${item.id} + ')'" class="action-btn btn-danger">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:each="item : ${items}" th:if="${tableName == 'report'}" class="table-row">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-yellow-400" th:text="${item.id}">1</td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <span class="status-badge"
+                              th:classappend="${item.type == 'Financial' ? 'status-completed' : (item.type == 'Occupancy' ? 'status-booked' : 'status-pending')}"
+                              th:text="${item.type}">Financial</span>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-300" th:text="${#temporals.format(item.generatedDate, 'yyyy-MM-dd HH:mm')}">2024-01-01 10:00</td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="relationship-info">
+                            <div class="text-sm text-gray-300 font-semibold" th:text="${item.admin?.name ?: 'Unknown Admin'}">Admin Name</div>
+                            <div class="text-xs text-gray-400" th:text="${item.admin?.id ?: 'N/A'}">1</div>
+                            <div class="text-xs text-gray-400" th:text="${item.admin?.email ?: 'No Email'}">admin@email.com</div>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold">
+                        <div class="flex gap-2">
+                            <button th:onclick="'editItem(' + ${item.id} + ')'" class="action-btn btn-warning">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button th:onclick="'viewDetails(' + ${item.id} + ')'" class="action-btn btn-primary">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button th:onclick="'deleteItem(' + ${item.id} + ')'" class="action-btn btn-danger">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex justify-between items-center mt-6">
+        <div class="text-sm text-gray-400 glass px-3 py-2 rounded-lg">
+            Showing <span class="font-semibold" th:text="${startItem}">1</span> to
+            <span class="font-semibold" th:text="${endItem}">10</span> of
+            <span class="font-semibold" th:text="${totalItems}">100</span> entries
+        </div>
+        <div class="flex gap-2">
+            <button onclick="previousPage()" class="btn-primary px-3 py-2 rounded-lg">
+                <i class="fas fa-chevron-left mr-1"></i>Previous
+            </button>
+            <div class="overflow-x-auto flex gap-1" id="paginationDiv">
+                <!-- Dynamic pagination buttons will be generated here -->
+            </div>
+            <button onclick="nextPage()" class="btn-primary px-3 py-2 rounded-lg">
+                Next<i class="fas fa-chevron-right ml-1"></i>
+            </button>
+        </div>
+    </div>
+</main>
+
+<!-- Add/Edit Modal -->
+<div id="addEditModal" class="fixed inset-0 modal-backdrop hidden flex items-center justify-center z-50">
+    <div class="glass p-6 rounded-lg w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-4">
+            <h3 id="modalTitle" class="text-lg font-bold">Add New Item</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="addEditForm" method="post">
+            <input type="hidden" id="itemId" name="id">
+            <div id="formFields" class="space-y-4"></div>
+            <div class="flex justify-end gap-2 mt-4">
+                <button type="button" onclick="closeModal()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">
+                    Cancel
+                </button>
+                <button type="submit" class="btn-primary px-4 py-2 rounded-lg">
+                    Save
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="fixed inset-0 modal-backdrop hidden flex items-center justify-center z-50">
+    <div class="glass p-6 rounded-lg w-full max-w-md mx-4">
+        <div class="text-center">
+            <i class="fas fa-exclamation-triangle text-red-400 text-3xl mb-3"></i>
+            <h3 class="text-lg font-bold mb-2">Confirm Delete</h3>
+            <p class="text-gray-400 mb-4">Are you sure you want to delete this item? This action cannot be undone.</p>
+            <div class="flex justify-center gap-3">
+                <button onclick="closeDeleteModal()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">
+                    Cancel
+                </button>
+                <button onclick="confirmDelete()" class="btn-danger px-4 py-2 rounded-lg">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentPage = '[[${currentPage}]]';
+    let itemsPerPage = 10;
+    let currentSearchTerm = '[[${searchTerm}]]';
+    let totalPages = '[[${totalPages}]]';
+    let itemToDelete = null;
+    let tableName = '[[${tableName}]]';
+
+    const tableConfigs = {
+        'admins': {
+            fields: [
+                {name: 'name', label: 'Name', type: 'text', required: true},
+                {name: 'email', label: 'Email', type: 'email', required: true},
+                {name: 'password', label: 'Password', type: 'password', required: true},
+                {name: 'role', label: 'Role', type: 'select', required: true, options: ['Operations Manager', 'Finance Officer', 'Security Supervisor', 'IT Support', 'Customer Service Officer', 'Super Admin']}
+            ],
+            headers: ['Name', 'Email', 'Role']
+        },
+        'booking': {
+            fields: [
+                {name: 'user_id', label: 'User ID', type: 'number', required: true},
+                {name: 'vehicle_id', label: 'Vehicle ID', type: 'number', required: true},
+                {name: 'slot_id', label: 'Slot ID', type: 'number', required: true},
+                {name: 'start_time', label: 'Start Time', type: 'datetime-local', required: true},
+                {name: 'end_time', label: 'End Time', type: 'datetime-local', required: false},
+                {name: 'payment_status', label: 'Payment Status', type: 'select', required: true, options: ['Pending', 'Completed', 'Failed']}
+            ],
+            headers: ['User', 'Vehicle', 'Slot', 'Start Time', 'End Time', 'Payment Status']
+        },
+        'users': {
+            fields: [
+                {name: 'name', label: 'Name', type: 'text', required: true},
+                {name: 'email', label: 'Email', type: 'email', required: true},
+                {name: 'password', label: 'Password', type: 'password', required: true},
+                {name: 'contact_no', label: 'Contact No', type: 'text', required: false}
+            ],
+            headers: ['Name', 'Email', 'Contact No']
+        },
+        'vehicle': {
+            fields: [
+                {name: 'user_id', label: 'User ID', type: 'number', required: true},
+                {name: 'vehicle_no', label: 'Vehicle Number', type: 'text', required: true},
+                {name: 'vehicle_type', label: 'Vehicle Type', type: 'select', required: true, options: ['Car', 'Bike', 'Van', 'Truck']},
+                {name: 'brand', label: 'Brand', type: 'text', required: false},
+                {name: 'model', label: 'Model', type: 'text', required: false},
+                {name: 'color', label: 'Color', type: 'text', required: false}
+            ],
+            headers: ['User', 'Vehicle No', 'Type', 'Brand', 'Model', 'Color']
+        },
+        'parkinglot': {
+            fields: [
+                { name: 'city', label: 'City', type: 'text', required: true },
+                { name: 'location', label: 'Location', type: 'text', required: true },
+                { name: 'total_slots', label: 'Total Slots', type: 'number', required: true },
+                { name: 'price_hr', label: 'Price per Hour', type: 'number', step: '0.01', required: true }
+            ],
+            headers: ['City', 'Location', 'Total Slots', 'Price per Hour']
+        },
+        'parkingslot': {
+            fields: [
+                {name: 'lot_id', label: 'Lot ID', type: 'number', required: true},
+                {name: 'status', label: 'Status', type: 'select', required: true, options: ['AVAILABLE', 'BOOKED', 'OCCUPIED']}
+            ],
+            headers: ['Lot', 'Status']
+        },
+        'payment': {
+            fields: [
+                {name: 'booking_id', label: 'Booking ID', type: 'number', required: true},
+                {name: 'amount', label: 'Amount', type: 'number', step: '0.01', required: true},
+                {name: 'method', label: 'Payment Method', type: 'select', required: true, options: ['Card', 'Cash', 'Arrival']},
+                {name: 'status', label: 'Status', type: 'select', required: true, options: ['Pending', 'Completed', 'Failed']}
+            ],
+            headers: ['Booking', 'Amount', 'Method', 'Status', 'Timestamp']
+        },
+        'notification': {
+            fields: [
+                {name: 'type', label: 'Type', type: 'select', required: true, options: ['FULL_SLOT', 'OVERSTAY', 'SECURITY_INCIDENT', 'NONE']},
+                {name: 'description', label: 'Description', type: 'textarea', required: false},
+                {name: 'user_id', label: 'User ID', type: 'number', required: false},
+                {name: 'admin_id', label: 'Admin ID', type: 'number', required: false}
+            ],
+            headers: ['Type', 'Description', 'User', 'Admin', 'Timestamp']
+        },
+        'vehiclelog': {
+            fields: [
+                {name: 'vehicle_id', label: 'Vehicle ID', type: 'number', required: true},
+                {name: 'lot_id', label: 'Lot ID', type: 'number', required: true},
+                {name: 'entry_time', label: 'Entry Time', type: 'datetime-local', required: true},
+                {name: 'exit_time', label: 'Exit Time', type: 'datetime-local', required: false}
+            ],
+            headers: ['Vehicle', 'Lot', 'Entry Time', 'Exit Time']
+        },
+        'report': {
+            fields: [
+                {name: 'type', label: 'Report Type', type: 'select', required: true, options: ['Financial', 'Occupancy', 'Performance']},
+                {name: 'admin_id', label: 'Admin ID', type: 'number', required: true}
+            ],
+            headers: ['Type', 'Generated Date', 'Admin']
+        }
+    };
+
+    function openAddModal() {
+        document.getElementById('modalTitle').textContent = 'Add New Item';
+        document.getElementById('addEditForm').reset();
+        document.getElementById('itemId').value = '';
+        generateFormFields();
+        document.getElementById('addEditModal').classList.remove('hidden');
+    }
+
+    async function editItem(id) {
+        document.getElementById('modalTitle').textContent = 'Edit Item';
+        document.getElementById('itemId').value = id;
+        try {
+            const response = await fetch(`/admin/tables/${tableName}/${id}`);
+            const item = await response.json();
+            generateFormFields(item);
+            document.getElementById('addEditModal').classList.remove('hidden');
+        } catch (error) {
+            console.error('Error fetching item:', error);
+            showNotification('Error fetching item details', 'error');
+        }
+    }
+
+    async function viewDetails(id) {
+        try {
+            const response = await fetch(`/admin/tables/${tableName}/${id}`);
+            const item = await response.json();
+            const detailsHtml = `
+                    <div class="fixed inset-0 modal-backdrop flex items-center justify-center z-50" id="detailsModal">
+                        <div class="glass p-6 rounded-lg w-full max-w-2xl mx-4 max-h-80 overflow-y-auto">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-bold">Item Details</h3>
+                                <button onclick="closeDetailsModal()" class="text-gray-400 hover:text-white">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="grid grid-cols-1 gap-3">
+                                ${Object.entries(item).map(([key, value]) => `
+                                    <div class="relationship-info">
+                                        <div class="text-xs text-gray-400 uppercase">${key.replace(/([A-Z])/g, ' $1').trim()}</div>
+                                        <div class="text-sm text-gray-300">${value || 'N/A'}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            document.body.insertAdjacentHTML('beforeend', detailsHtml);
+        } catch (error) {
+            console.error('Error fetching item details:', error);
+            showNotification('Error fetching item details', 'error');
+        }
+    }
+
+    function closeDetailsModal() {
+        const modal = document.getElementById('detailsModal');
+        if (modal) modal.remove();
+    }
+
+    function exportData() {
+        showNotification('Preparing export...', 'info');
+        const table = document.querySelector('table');
+        const rows = Array.from(table.querySelectorAll('tr'));
+        const csvContent = rows.map(row => {
+            const cells = Array.from(row.querySelectorAll('th, td'));
+            return cells.map(cell => `"${cell.textContent.trim().replace(/"/g, '""')}"`).join(',');
+        }).join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `${tableName}_export_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showNotification('Data exported successfully!', 'success');
+    }
+
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 z-50 p-3 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full`;
+        const bgColor = type === 'success' ? 'bg-green-500/10 text-green-400' : type === 'error' ? 'bg-red-500/10 text-red-400' : 'bg-yellow-400/10 text-yellow-400';
+        notification.className += ` ${bgColor}`;
+        notification.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+        document.body.appendChild(notification);
+        setTimeout(() => {
+            notification.style.transform = 'translateX(0)';
+        }, 100);
+        setTimeout(() => {
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (notification.parentNode) notification.parentNode.removeChild(notification);
+            }, 300);
+        }, 3000);
+    }
+
+    function generateFormFields(item = null) {
+        const config = tableConfigs[tableName];
+        const formFields = document.getElementById('formFields');
+        const form = document.getElementById('addEditForm');
+
+        if (config) {
+            form.action = `/admin/tables/${tableName}/save`;
+            formFields.innerHTML = config.fields.map(field => {
+                let input = '';
+                let value = item && field.name.includes('.') ? field.name.split('.').reduce((obj, key) => obj ? obj[key] : '', item) : (item ? item[field.name] : '');
+                if (field.type === 'select') {
+                    input = `
+                            <select name="${field.name}" id="${field.name}" ${field.required ? 'required' : ''}
+                                    class="form-input w-full">
+                                <option value="">Select ${field.label}</option>
+                                ${field.options.map(option => `<option value="${option}" ${value === option ? 'selected' : ''}>${option}</option>`).join('')}
+                            </select>
+                        `;
+                } else if (field.type === 'textarea') {
+                    input = `
+                            <textarea name="${field.name}" id="${field.name}" ${field.required ? 'required' : ''}
+                                      class="form-input w-full" rows="3">${value || ''}</textarea>
+                        `;
+                } else if (field.type === 'datetime-local') {
+                    const dateValue = value ? new Date(value).toISOString().slice(0, 16) : '';
+                    input = `
+                            <input type="${field.type}" name="${field.name}" id="${field.name}" ${field.required ? 'required' : ''}
+                                   value="${dateValue}" class="form-input w-full">
+                        `;
+                } else {
+                    input = `
+                            <input type="${field.type}" name="${field.name}" id="${field.name}" ${field.required ? 'required' : ''}
+                                   ${field.step ? `step="${field.step}"` : ''} value="${value || ''}"
+                                   class="form-input w-full">
+                        `;
+                }
+                return `
+                        <div>
+                            <label for="${field.name}" class="block text-sm font-semibold text-gray-400 mb-1">${field.label}</label>
+                            ${input}
+                        </div>
+                    `;
+            }).join('');
+        }
+    }
+
+    function deleteItem(id) {
+        itemToDelete = id;
+        document.getElementById('deleteModal').classList.remove('hidden');
+    }
+
+    function confirmDelete() {
+        if (itemToDelete) {
+            fetch(`/admin/tables/${tableName}/${itemToDelete}`, {
+                method: 'DELETE'
+            }).then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    showNotification('Error deleting item', 'error');
+                }
+            }).catch(error => {
+                console.error('Error deleting item:', error);
+                showNotification('Error deleting item', 'error');
+            });
+        }
+        closeDeleteModal();
+    }
+
+    function closeModal() {
+        document.getElementById('addEditModal').classList.add('hidden');
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').classList.add('hidden');
+        itemToDelete = null;
+    }
+
+    function searchTable() {
+        const searchTerm = document.getElementById('searchInput').value;
+        const url = `/admin/tables/${tableName}?search=${encodeURIComponent(searchTerm)}`;
+        window.location.href = url;
+    }
+
+    function clearSearch() {
+        window.location.href = `/admin/tables/${tableName}`;
+    }
+
+    function refreshTable() {
+        const searchTerm = document.getElementById('searchInput').value;
+        let url = `/admin/tables/${tableName}`;
+        if (searchTerm) url += `?search=${encodeURIComponent(searchTerm)}`;
+        window.location.href = url;
+    }
+
+    function previousPage() {
+        if (currentPage > 0) {
+            currentPage--;
+            loadTableData();
+        }
+    }
+
+    function nextPage() {
+        if (currentPage < totalPages - 1) {
+            currentPage++;
+            loadTableData();
+        }
+    }
+
+    function loadTableData() {
+        let url = `/admin/tables/${tableName}?page=${currentPage}&size=${itemsPerPage}`;
+        if (currentSearchTerm) url += `&search=${encodeURIComponent(currentSearchTerm)}`;
+        window.location.href = url;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        generateFormFields();
+        let searchTimeout;
+        document.getElementById('searchInput').addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                if (this.value.length > 2 || this.value.length === 0) searchTable();
+            }, 500);
+        });
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                e.preventDefault();
+                openAddModal();
+            }
+            if (e.key === 'Escape') {
+                closeModal();
+                closeDeleteModal();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                e.preventDefault();
+                document.getElementById('searchInput').focus();
+            }
+        });
+        document.querySelectorAll('.table-row').forEach(row => {
+            row.addEventListener('dblclick', function() {
+                const idCell = this.querySelector('td:first-child');
+                if (idCell) viewDetails(idCell.textContent.trim());
+            });
+        });
+        showNotification('Table management interface loaded successfully!', 'success');
+
+        const paginationDiv = document.getElementById('paginationDiv');
+        paginationDiv.innerHTML = '';
+        for (let i = 1; i <= totalPages; i++) {
+            const button = document.createElement('button');
+            button.textContent = i;
+            button.className = 'px-3 py-2 glass text-gray-400 rounded-lg hover:bg-yellow-400/30';
+            if (i - 1 === currentPage) {
+                button.className = 'px-3 py-2 bg-yellow-400 text-black rounded-lg font-semibold';
+            }
+            button.onclick = function() {
+                currentPage = i - 1;
+                loadTableData();
+            };
+            paginationDiv.appendChild(button);
+        }
+    });
+</script>
+</body>
+</html>

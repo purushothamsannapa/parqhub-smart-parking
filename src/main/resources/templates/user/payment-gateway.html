@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParQHub - Secure Payment Gateway</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background: linear-gradient(135deg, #0a0f1c 0%, #1a1f35 50%, #0a0f1c 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .glass {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        
+        .glass-strong {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .neon-btn {
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            color: #ffffff;
+            font-weight: 600;
+            border-radius: 12px;
+            transition: all 0.3s ease-in-out;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .neon-btn:hover {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.6), 0 0 40px rgba(29, 78, 216, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .neon-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .neon-btn:hover::before {
+            left: 100%;
+        }
+        
+        .form-input, .form-select {
+            background: rgba(28, 36, 54, 0.8);
+            border: 1px solid rgba(55, 65, 81, 0.6);
+            transition: all 0.3s ease;
+            border-radius: 8px;
+        }
+        
+        .form-input:focus, .form-select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+            outline: none;
+            background: rgba(28, 36, 54, 1);
+        }
+        
+        .payment-card {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .payment-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+        }
+        
+        .payment-method-option {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .payment-method-option:hover {
+            transform: scale(1.02);
+        }
+        
+        .payment-method-option.selected {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border-color: #3b82f6;
+        }
+        
+        .floating-animation {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.6s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, #3b82f6, #10b981);
+            height: 4px;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+        
+        .secure-badge {
+            background: linear-gradient(135deg, #10b981, #059669);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        .amount-highlight {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body class="text-white min-h-screen flex items-center justify-center p-4">
+    <!-- Background Animation -->
+    <div class="fixed inset-0 z-0">
+        <div class="absolute top-20 left-20 w-32 h-32 bg-blue-500/10 rounded-full blur-xl floating-animation"></div>
+        <div class="absolute bottom-20 right-20 w-40 h-40 bg-purple-500/10 rounded-full blur-xl floating-animation" style="animation-delay: 1s;"></div>
+        <div class="absolute top-1/2 left-1/4 w-24 h-24 bg-green-500/10 rounded-full blur-xl floating-animation" style="animation-delay: 2s;"></div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="relative z-10 w-full max-w-4xl mx-auto">
+        <!-- Progress Indicator -->
+        <div class="mb-8">
+            <div class="flex items-center justify-center mb-4">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                            <i class="fas fa-check text-sm"></i>
+                        </div>
+                        <span class="ml-2 text-sm text-green-400">Booking</span>
+                    </div>
+                    <div class="progress-bar w-16"></div>
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                            <i class="fas fa-check text-sm"></i>
+                        </div>
+                        <span class="ml-2 text-sm text-green-400">Vehicle Log</span>
+                    </div>
+                    <div class="progress-bar w-16"></div>
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                            <i class="fas fa-credit-card text-sm"></i>
+                        </div>
+                        <span class="ml-2 text-sm text-blue-400">Payment</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Payment Container -->
+        <div class="glass-strong rounded-3xl overflow-hidden slide-in">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-center">
+                <h1 class="text-3xl font-bold mb-2">Secure Payment Gateway</h1>
+                <p class="text-blue-100">Complete your parking payment securely</p>
+                <div class="secure-badge inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mt-2">
+                    <i class="fas fa-shield-alt mr-2"></i>256-bit SSL Encrypted
+                </div>
+            </div>
+
+            <!-- Error/Success Messages -->
+            <div th:if="${error}" class="mx-6 mt-6 p-4 bg-red-500/20 border border-red-500 rounded-lg text-red-400 slide-in">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                <span th:text="${error}"></span>
+            </div>
+
+            <div th:if="${success}" class="mx-6 mt-6 p-4 bg-green-500/20 border border-green-500 rounded-lg text-green-400 slide-in">
+                <i class="fas fa-check-circle mr-2"></i>
+                <span th:text="${success}"></span>
+            </div>
+
+            <div th:if="${selectedBooking != null}" class="p-6">
+                <!-- Payment Summary Card -->
+                <div class="payment-card p-6 mb-6">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400 flex items-center">
+                        <i class="fas fa-receipt mr-3"></i>Payment Summary
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Booking Details -->
+                        <div class="space-y-4">
+                            <h3 class="font-medium text-gray-300 border-b border-gray-600 pb-2">Booking Information</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-400">Booking ID:</span>
+                                    <span class="font-semibold" th:text="${selectedBooking.id}">ID</span>
+                                </div>
+                                <div class="flex justify-between items-start">
+                                    <span class="text-gray-400">Vehicle:</span>
+                                    <div class="text-right">
+                                        <div class="font-semibold" th:text="${selectedBooking.vehicle != null ? (selectedBooking.vehicle.brand + ' ' + selectedBooking.vehicle.model) : 'N/A'}">Vehicle</div>
+                                        <div class="text-sm text-gray-400" th:text="${selectedBooking.vehicle != null ? '(' + selectedBooking.vehicle.vehicleNo + ')' : ''}">License</div>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between items-start">
+                                    <span class="text-gray-400">Location:</span>
+                                    <div class="text-right max-w-xs">
+                                        <span th:if="${selectedBooking.parkingSlot != null and selectedBooking.parkingSlot.parkingLot != null}"
+                                              th:text="${selectedBooking.parkingSlot.parkingLot.location + ', ' + selectedBooking.parkingSlot.parkingLot.city}">Location</span>
+                                        <span th:unless="${selectedBooking.parkingSlot != null and selectedBooking.parkingSlot.parkingLot != null}">N/A</span>
+                                        <div class="text-sm text-gray-400">Slot: 
+                                            <span th:if="${selectedBooking.parkingSlot != null}" th:text="${selectedBooking.parkingSlot.id}">Slot</span>
+                                            <span th:unless="${selectedBooking.parkingSlot != null}">N/A</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Timing & Payment Details -->
+                        <div class="space-y-4">
+                            <h3 class="font-medium text-gray-300 border-b border-gray-600 pb-2">Parking Duration</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-400">Entry Time:</span>
+                                    <span class="font-semibold text-green-400" th:text="${#temporals.format(vehicleLog.entryTime, 'dd/MM/yyyy HH:mm')}">Entry</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-400">Exit Time:</span>
+                                    <span class="font-semibold text-red-400" th:text="${#temporals.format(vehicleLog.exitTime, 'dd/MM/yyyy HH:mm')}">Exit</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-400">Duration:</span>
+                                    <span class="font-semibold text-blue-400" th:text="${hours} + ' hours'">Duration</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-400">Rate per Hour:</span>
+                                    <span class="font-semibold">LKR <span th:text="${#numbers.formatDecimal(pricePerHour, 1, 2)}">0.00</span></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Total Amount -->
+                    <div class="mt-6 pt-4 border-t border-gray-600">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xl font-semibold text-gray-300">Total Amount:</span>
+                            <span class="amount-highlight">LKR <span th:text="${#numbers.formatDecimal(amount, 1, 2)}">0.00</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Method Selection -->
+                <div class="payment-card p-6 mb-6">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400 flex items-center">
+                        <i class="fas fa-credit-card mr-3"></i>Select Payment Method
+                    </h2>
+                    
+                    <form th:action="@{/user/processPayment}" method="post" id="paymentForm">
+                        <input type="hidden" name="bookingId" th:value="${selectedBooking.id}">
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <!-- Credit/Debit Card -->
+                            <div class="payment-method-option glass p-4 rounded-lg border-2 border-transparent" data-method="Card">
+                                <div class="text-center">
+                                    <i class="fas fa-credit-card text-3xl text-blue-400 mb-2"></i>
+                                    <h3 class="font-semibold">Credit/Debit Card</h3>
+                                    <p class="text-sm text-gray-400 mt-1">Secure online payment</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Cash Payment -->
+                            <div class="payment-method-option glass p-4 rounded-lg border-2 border-transparent" data-method="Cash">
+                                <div class="text-center">
+                                    <i class="fas fa-money-bill-wave text-3xl text-green-400 mb-2"></i>
+                                    <h3 class="font-semibold">Cash Payment</h3>
+                                    <p class="text-sm text-gray-400 mt-1">Pay at the parking lot</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Pay on Arrival -->
+                            <div class="payment-method-option glass p-4 rounded-lg border-2 border-transparent" data-method="Arrival">
+                                <div class="text-center">
+                                    <i class="fas fa-clock text-3xl text-yellow-400 mb-2"></i>
+                                    <h3 class="font-semibold">Pay on Arrival</h3>
+                                    <p class="text-sm text-gray-400 mt-1">Defer payment</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <input type="hidden" name="paymentMethod" id="selectedPaymentMethod" required>
+                        
+                        <!-- Payment Button -->
+                        <button type="submit" id="paymentBtn" class="w-full py-4 px-6 neon-btn text-lg font-semibold relative overflow-hidden" disabled>
+                            <span class="relative z-10">
+                                <i class="fas fa-lock mr-2"></i>
+                                <span id="btnText">Select Payment Method</span>
+                            </span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Security Info -->
+                <div class="glass p-4 rounded-lg">
+                    <div class="flex items-center justify-center space-x-6 text-sm text-gray-400">
+                        <div class="flex items-center">
+                            <i class="fas fa-shield-alt text-green-400 mr-2"></i>
+                            <span>SSL Secured</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-lock text-green-400 mr-2"></i>
+                            <span>256-bit Encryption</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-green-400 mr-2"></i>
+                            <span>PCI Compliant</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Back Link -->
+                <div class="text-center mt-6">
+                    <a th:href="@{/user/bookings}" class="inline-flex items-center text-blue-400 hover:text-blue-300 transition">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Bookings
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Payment method selection
+        document.querySelectorAll('.payment-method-option').forEach(option => {
+            option.addEventListener('click', function() {
+                // Remove selected class from all options
+                document.querySelectorAll('.payment-method-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                
+                // Add selected class to clicked option
+                this.classList.add('selected');
+                
+                // Set the payment method value
+                const method = this.dataset.method;
+                document.getElementById('selectedPaymentMethod').value = method;
+                
+                // Enable the payment button
+                const paymentBtn = document.getElementById('paymentBtn');
+                const btnText = document.getElementById('btnText');
+                
+                paymentBtn.disabled = false;
+                paymentBtn.classList.remove('opacity-50');
+                btnText.innerHTML = `<i class="fas fa-credit-card mr-2"></i>Proceed with ${method === 'Card' ? 'Card Payment' : method === 'Cash' ? 'Cash Payment' : 'Pay on Arrival'}`;
+            });
+        });
+
+        // Form submission with loading state
+        document.getElementById('paymentForm').addEventListener('submit', function(e) {
+            const paymentBtn = document.getElementById('paymentBtn');
+            const btnText = document.getElementById('btnText');
+            
+            paymentBtn.disabled = true;
+            btnText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing Payment...';
+        });
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animate progress bar
+            setTimeout(() => {
+                document.querySelectorAll('.progress-bar').forEach(bar => {
+                    bar.style.width = '100%';
+                });
+            }, 500);
+        });
+    </script>
+</body>
+</html>

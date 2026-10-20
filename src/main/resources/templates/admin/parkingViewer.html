@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParQHub - Parking Slot Viewer</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #0a0f1c; }
+        .glass {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .active {
+            background: linear-gradient(90deg, #ffb703, #ff6600);
+            color: #0a0f1c !important;
+            font-weight: bold;
+        }
+        .slot {
+            width: 60px;
+            height: 40px;
+            border: 2px solid #374151;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            visibility: visible;
+            opacity: 1;
+        }
+        .slot:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        .slot.available {
+            background-color: #10b981;
+            color: white;
+            border-color: #059669;
+        }
+        .slot.booked {
+            background-color: #3b82f6;
+            color: white;
+            border-color: #2563eb;
+        }
+        .slot.occupied {
+            background-color: #ef4444;
+            color: white;
+            border-color: #dc2626;
+        }
+        .slot-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+            gap: 8px;
+            max-width: 800px;
+            margin: 0 auto;
+            overflow: visible;
+            min-height: 100px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body class="text-white flex">
+
+<!-- Sidebar (unchanged) -->
+<aside class="w-72 h-screen glass flex flex-col fixed">
+    <div class="p-6 flex items-center gap-3 border-b border-gray-700">
+        <img src="/images/logo.svg" alt="ParQHub" class="h-10">
+        <span class="text-2xl font-bold">ParQHub</span>
+    </div>
+    <nav class="flex-1 p-4 space-y-2">
+        <a href="/admin/dashboard" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 transition"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="/admin/tables" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 transition"><i class="fas fa-table"></i> Table View</a>
+        <a href="/admin/parking-viewer" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 transition active"><i class="fas fa-parking"></i> Parking Viewer</a>
+        <a href="/admin/reports" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-chart-bar"></i> Report View</a>
+
+        <div th:if="${adminRole.name() == 'OPERATIONS_MANAGER'}">
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-parking"></i> Slot Availability</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-user-cog"></i> Staff Assignment</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-chart-line"></i> Performance Summaries</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-tachometer-alt"></i> Live Slot Usage</a>
+        </div>
+        <div th:if="${adminRole.name() == 'CUSTOMER_SERVICE_OFFICER'}">
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-ticket-alt"></i> Booking Details</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-exclamation-triangle"></i> Incident Logging</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-bell"></i> System Alerts</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-history"></i> Complaint History</a>
+        </div>
+        <div th:if="${adminRole.name() == 'IT_SUPPORT'}">
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-cogs"></i> Backend Configurations</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-server"></i> System Uptime</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-key"></i> Password Reset</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-bug"></i> Error Logs</a>
+        </div>
+        <div th:if="${adminRole.name() == 'FINANCE_OFFICER'}">
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-file-invoice-dollar"></i> Financial Reports</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-history"></i> Transaction History</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-chart-pie"></i> Revenue Breakdown</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-file-export"></i> Export Reports</a>
+        </div>
+        <div th:if="${adminRole.name() == 'SECURITY_SUPERVISOR'}">
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-car"></i> Vehicle Registration</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-bell"></i> Overstay Alerts</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-flag"></i> Unauthorized Vehicles</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-clipboard-list"></i> Vehicle Movement Logs</a>
+        </div>
+        <div th:if="${adminRole.name() == 'SUPER_ADMIN'}">
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 font-bold"><i class="fas fa-crown"></i> Super Admin Panel</a>
+        </div>
+    </nav>
+    <div class="p-4 border-t border-gray-700">
+        <a th:href="@{/admin/logout}" class="flex items-center gap-3 p-3 rounded-lg hover:bg-red-500/30 text-red-400"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+</aside>
+
+<!-- Main Content -->
+<main class="ml-72 w-full p-6">
+    <!-- Top bar -->
+    <div class="flex justify-between items-center mb-6">
+        <div class="flex items-center gap-4">
+            <a href="/admin/dashboard" class="text-yellow-400 hover:text-yellow-300 transition">
+                <i class="fas fa-arrow-left text-xl"></i>
+            </a>
+            <h1 class="text-2xl font-bold">Real-Time Parking Slot Viewer</h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <button onclick="refreshSlots()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-400 transition font-semibold">
+                <i class="fas fa-sync-alt mr-2"></i>Refresh
+            </button>
+            <span class="text-gray-300">Welcome, <span th:text="${adminName}">Admin</span></span>
+            <img src="/images/admin-avatar.png" alt="Admin" class="h-10 w-10 rounded-full border-2 border-yellow-400">
+        </div>
+    </div>
+
+    <!-- Parking Lot Selection -->
+    <div class="glass p-6 rounded-lg mb-6">
+        <h2 class="text-xl font-bold mb-4">Select Parking Lot</h2>
+        <form method="get" action="/admin/parking-viewer" class="flex flex-col gap-4">
+            <div class="flex gap-4 items-end">
+                <div class="flex-1">
+                    <label for="city" class="block text-sm font-medium text-gray-300 mb-2">Select City</label>
+                    <select name="city" id="city" onchange="updateLocations()"
+                            class="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-yellow-400">
+                        <option value="">Select a city...</option>
+                        <option th:each="city : ${cities}"
+                                th:value="${city}"
+                                th:text="${city}"
+                                th:selected="${param.city != null && param.city == city}">
+                            City
+                        </option>
+                    </select>
+                </div>
+                <div class="flex-1">
+                    <label for="location" class="block text-sm font-medium text-gray-300 mb-2">Select Location</label>
+                    <select name="location" id="location" onchange="this.form.submit()"
+                            class="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-yellow-400">
+                        <option value="">Select a location...</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex gap-4">
+                <button type="submit"
+                        class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-400 transition font-semibold">
+                    <i class="fas fa-search mr-2"></i>Search
+                </button>
+                <button type="button" onclick="clearSearch()"
+                        class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-400 transition font-semibold">
+                    <i class="fas fa-times mr-2"></i>Clear
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Selected Parking Lot Info -->
+    <div th:if="${selectedLot}" class="glass p-6 rounded-lg mb-6">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <h2 class="text-xl font-bold" th:text="|${selectedLot.city} - ${selectedLot.location}|">Parking Lot</h2>
+                <p class="text-gray-400" th:text="|Total Slots: ${totalSlots}|">Total Slots: 0</p>
+            </div>
+
+
+
+
+        </div>
+
+        <!-- Statistics -->
+        <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="text-center">
+                <div class="text-2xl font-bold text-green-400" th:text="${availableCount}">0</div>
+                <div class="text-sm text-gray-400">Available</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold text-blue-400" th:text="${bookedCount}">0</div>
+                <div class="text-sm text-gray-400">Booked</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold text-red-400" th:text="${occupiedCount}">0</div>
+                <div class="text-sm text-gray-400">Occupied</div>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="flex gap-6 justify-center mb-6">
+            <div class="legend-item">
+                <div class="slot available"></div>
+                <span>Available</span>
+            </div>
+            <div class="legend-item">
+                <div class="slot booked"></div>
+                <span>Booked</span>
+            </div>
+            <div class="legend-item">
+                <div class="slot occupied"></div>
+                <span>Occupied</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Parking Slots Grid -->
+    <div th:if="${selectedLot}" class="glass p-6 rounded-lg">
+        <h3 class="text-lg font-bold mb-4">Parking Slots</h3>
+        <div class="slot-grid" id="slotGrid">
+            <div th:each="slot : ${parkingSlots}"
+                 th:class="'slot ' + ${slot.status.name().toLowerCase()}"
+                 th:data-slot-id="${slot.id}"
+                 th:data-status="${slot.status}"
+                 th:text="${slot.id}"
+                 th:title="'Slot ' + ${slot.id} + ' - ' + ${slot.status}"
+                 onclick="viewSlotDetails(this)">
+            </div>
+        </div>
+    </div>
+
+    <!-- No Selection Message -->
+    <div th:if="${selectedLot == null}" class="glass p-8 rounded-lg text-center">
+        <i class="fas fa-parking text-6xl text-gray-600 mb-4"></i>
+        <h3 class="text-xl font-bold mb-2">Select a Parking Lot</h3>
+        <p class="text-gray-400">Choose a city and location from the dropdowns above to view its slots in real-time.</p>
+    </div>
+</main>
+
+<script>
+    let refreshInterval;
+    const selectedLotId = /*[[${selectedLot?.id}]]*/ null;
+
+    function updateLocations() {
+        const citySelect = document.getElementById('city');
+        const locationSelect = document.getElementById('location');
+        const city = citySelect.value;
+
+        locationSelect.innerHTML = '<option value="">Select a location...</option>';
+
+        if (city) {
+            fetch(`/admin/api/locations?city=${encodeURIComponent(city)}`)
+                .then(response => response.json())
+                .then(locations => {
+                    locations.forEach(location => {
+                        const option = document.createElement('option');
+                        option.value = location;
+                        option.textContent = location;
+                        locationSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching locations:', error);
+                });
+        }
+    }
+
+    function clearSearch() {
+        document.getElementById('city').value = '';
+        document.getElementById('location').value = '';
+        document.getElementById('location').innerHTML = '<option value="">Select a location...</option>';
+        document.forms[0].submit();
+    }
+
+    function refreshSlots() {
+        if (selectedLotId) {
+            fetch(`/admin/api/parking-slots/${selectedLotId}`)
+                .then(response => response.json())
+                .then(slots => {
+                    updateSlotGrid(slots);
+                    updateStatistics(slots);
+                    updateLastUpdated();
+                })
+                .catch(error => {
+                    console.error('Error refreshing slots:', error);
+                });
+        }
+    }
+
+    function updateSlotGrid(slots) {
+        const slotGrid = document.getElementById('slotGrid');
+        slotGrid.innerHTML = '';
+
+        slots.forEach(slot => {
+            const slotElement = document.createElement('div');
+            slotElement.className = `slot ${slot.status.toLowerCase()}`;
+            slotElement.setAttribute('data-slot-id', slot.id);
+            slotElement.setAttribute('data-status', slot.status);
+            slotElement.setAttribute('title', `Slot ${slot.id} - ${slot.status}`);
+            slotElement.textContent = slot.id;
+            slotElement.style.visibility = 'visible';
+            slotElement.style.opacity = '1';
+            slotGrid.appendChild(slotElement);
+        });
+    }
+
+    function updateStatistics(slots) {
+        const availableCount = slots.filter(s => s.status === 'Available').length;
+        const bookedCount = slots.filter(s => s.status === 'Booked').length;
+        const occupiedCount = slots.filter(s => s.status === 'Occupied').length;
+
+        const statsElements = document.querySelectorAll('.text-2xl.font-bold');
+        if (statsElements.length >= 3) {
+            statsElements[0].textContent = availableCount;
+            statsElements[1].textContent = bookedCount;
+            statsElements[2].textContent = occupiedCount;
+        }
+    }
+
+    function updateLastUpdated() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString();
+        document.getElementById('lastUpdated').textContent = timeString;
+    }
+
+    function viewSlotDetails(slotElement) {
+        const slotId = slotElement.getAttribute('data-slot-id');
+        window.location.href = `/admin/manage-parking-slot?slotId=${slotId}`;
+    }
+
+    if (selectedLotId) {
+        refreshInterval = setInterval(refreshSlots, 30000);
+    }
+
+    window.addEventListener('beforeunload', function() {
+        if (refreshInterval) {
+            clearInterval(refreshInterval);
+        }
+    });
+
+    updateLastUpdated();
+</script>
+
+</body>
+</html>

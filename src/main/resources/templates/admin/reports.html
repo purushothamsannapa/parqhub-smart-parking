@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParQHub - Reports Dashboard</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #0a0f1c; }
+        .glass {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .active {
+            background: linear-gradient(90deg, #ffb703, #ff6600);
+            color: #0a0f1c !important;
+            font-weight: bold;
+        }
+        .report-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .report-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body class="text-white flex">
+
+<!-- Sidebar -->
+<aside class="w-72 h-screen glass flex flex-col fixed">
+    <div class="p-6 flex items-center gap-3 border-b border-gray-700">
+        <img src="/images/logo.svg" alt="ParQHub" class="h-10">
+        <span class="text-2xl font-bold">ParQHub</span>
+    </div>
+    <nav class="flex-1 p-4 space-y-2">
+        <a href="/admin/dashboard" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 transition"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="/admin/tables" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 transition"><i class="fas fa-table"></i> Table View</a>
+        <a href="/admin/parking-viewer" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 transition"><i class="fas fa-parking"></i> Parking Viewer</a>
+        <a href="/admin/reports" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 transition active"><i class="fas fa-chart-bar"></i> Report View</a>
+
+        <!-- Role-based Links -->
+        <div th:if="${adminRole.name() == 'OPERATIONS_MANAGER'}">
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-parking"></i> Slot Availability</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-user-cog"></i> Staff Assignment</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-chart-line"></i> Performance Summaries</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-tachometer-alt"></i> Live Slot Usage</a>
+        </div>
+        <div th:if="${adminRole.name() == 'CUSTOMER_SERVICE_OFFICER'}">
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-ticket-alt"></i> Booking Details</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-exclamation-triangle"></i> Incident Logging</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-bell"></i> System Alerts</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-history"></i> Complaint History</a>
+        </div>
+        <div th:if="${adminRole.name() == 'IT_SUPPORT'}">
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-cogs"></i> Backend Configurations</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-server"></i> System Uptime</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-key"></i> Password Reset</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-bug"></i> Error Logs</a>
+        </div>
+        <div th:if="${adminRole.name() == 'FINANCE_OFFICER'}">
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-file-invoice-dollar"></i> Financial Reports</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-history"></i> Transaction History</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-chart-pie"></i> Revenue Breakdown</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-file-export"></i> Export Reports</a>
+        </div>
+        <div th:if="${adminRole.name() == 'SECURITY_SUPERVISOR'}">
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-car"></i> Vehicle Registration</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-bell"></i> Overstay Alerts</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-flag"></i> Unauthorized Vehicles</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-clipboard-list"></i> Vehicle Movement Logs</a>
+        </div>
+        <div th:if="${adminRole.name() == 'SUPER_ADMIN'}">
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 font-bold"><i class="fas fa-crown"></i> Super Admin Panel</a>
+        </div>
+    </nav>
+    <div class="p-4 border-t border-gray-700">
+        <a th:href="@{/admin/logout}" class="flex items-center gap-3 p-3 rounded-lg hover:bg-red-500/30 text-red-400"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+</aside>
+
+<!-- Main Content -->
+<main class="ml-72 w-full p-6">
+    <!-- Top bar -->
+    <div class="flex justify-between items-center mb-6">
+        <div class="flex items-center gap-4">
+            <a href="/admin/dashboard" class="text-yellow-400 hover:text-yellow-300 transition">
+                <i class="fas fa-arrow-left text-xl"></i>
+            </a>
+            <h1 class="text-2xl font-bold">Reports Dashboard</h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <button onclick="refreshDashboard()" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-400 transition font-semibold">
+                <i class="fas fa-sync-alt mr-2"></i>Refresh Data
+            </button>
+            <span class="text-gray-300">Welcome, <span th:text="${adminName}">Admin</span></span>
+            <img src="/images/admin-avatar.png" alt="Admin" class="h-10 w-10 rounded-full border-2 border-yellow-400">
+        </div>
+    </div>
+
+    <!-- Reports Overview -->
+    <div class="glass p-6 rounded-lg mb-6">
+        <h2 class="text-xl font-bold mb-4">Available Reports</h2>
+        <p class="text-gray-400 mb-6">Select a report type to view detailed analytics and insights.</p>
+        
+        <!-- Report Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Financial Report -->
+            <div class="report-card glass p-6 rounded-lg" onclick="location.href='/admin/report/financial'">
+                <div class="flex items-center justify-between mb-4">
+                    <i class="fas fa-file-invoice-dollar text-green-400 text-3xl"></i>
+                    <span class="text-sm text-gray-400">Revenue</span>
+                </div>
+                <h3 class="text-lg font-semibold mb-2">Financial Report</h3>
+                <p class="text-gray-400 text-sm mb-4">Revenue analysis, payment tracking, and financial insights with LKR currency</p>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center text-green-400 text-sm">
+                        <i class="fas fa-arrow-right mr-2"></i>
+                        View Report
+                    </div>
+                    <div class="flex gap-2">
+                        <span class="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">CSV Export</span>
+                        <span class="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded">Location Filter</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Occupancy Report -->
+            <div class="report-card glass p-6 rounded-lg" onclick="location.href='/admin/report/occupancy'">
+                <div class="flex items-center justify-between mb-4">
+                    <i class="fas fa-parking text-blue-400 text-3xl"></i>
+                    <span class="text-sm text-gray-400">Usage</span>
+                </div>
+                <h3 class="text-lg font-semibold mb-2">Occupancy Report</h3>
+                <p class="text-gray-400 text-sm mb-4">Live parking slot utilization, booking patterns, and real-time occupancy rates</p>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center text-blue-400 text-sm">
+                        <i class="fas fa-arrow-right mr-2"></i>
+                        View Report
+                    </div>
+                    <div class="flex gap-2">
+                        <span class="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">CSV Export</span>
+                        <span class="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded">Live Data</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Report -->
+            <div class="report-card glass p-6 rounded-lg" onclick="location.href='/admin/report/performance'">
+                <div class="flex items-center justify-between mb-4">
+                    <i class="fas fa-chart-line text-purple-400 text-3xl"></i>
+                    <span class="text-sm text-gray-400">Analytics</span>
+                </div>
+                <h3 class="text-lg font-semibold mb-2">Performance Report</h3>
+                <p class="text-gray-400 text-sm mb-4">Comprehensive system performance, user activity, and operational metrics</p>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center text-purple-400 text-sm">
+                        <i class="fas fa-arrow-right mr-2"></i>
+                        View Report
+                    </div>
+                    <div class="flex gap-2">
+                        <span class="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">CSV Export</span>
+                        <span class="text-xs bg-purple-500/20 text-purple-400 px-2 py-1 rounded">All Tables</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="glass p-6 rounded-lg mb-6">
+        <h2 class="text-xl font-bold mb-4">Quick Actions</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <button onclick="generateQuickReport('financial')" class="flex items-center gap-3 p-4 bg-green-500/20 hover:bg-green-500/30 border border-green-500/30 rounded-lg transition">
+                <i class="fas fa-bolt text-green-400"></i>
+                <div class="text-left">
+                    <div class="font-semibold text-green-400">Quick Financial Report</div>
+                    <div class="text-sm text-gray-400">Last 30 days revenue analysis</div>
+                </div>
+            </button>
+            <button onclick="generateQuickReport('occupancy')" class="flex items-center gap-3 p-4 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 rounded-lg transition">
+                <i class="fas fa-bolt text-blue-400"></i>
+                <div class="text-left">
+                    <div class="font-semibold text-blue-400">Quick Occupancy Report</div>
+                    <div class="text-sm text-gray-400">Current week utilization</div>
+                </div>
+            </button>
+            <button onclick="generateQuickReport('performance')" class="flex items-center gap-3 p-4 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 rounded-lg transition">
+                <i class="fas fa-bolt text-purple-400"></i>
+                <div class="text-left">
+                    <div class="font-semibold text-purple-400">Quick Performance Report</div>
+                    <div class="text-sm text-gray-400">Last 7 days system metrics</div>
+                </div>
+            </button>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="glass p-6 rounded-lg text-center">
+            <div class="text-2xl font-bold text-green-400 mb-2" id="totalRevenue">LKR 0.00</div>
+            <div class="text-sm text-gray-400">Total Revenue</div>
+        </div>
+        <div class="glass p-6 rounded-lg text-center">
+            <div class="text-2xl font-bold text-blue-400 mb-2" id="avgOccupancy">0%</div>
+            <div class="text-sm text-gray-400">Avg Occupancy</div>
+        </div>
+        <div class="glass p-6 rounded-lg text-center">
+            <div class="text-2xl font-bold text-purple-400 mb-2" id="totalBookings">0</div>
+            <div class="text-sm text-gray-400">Total Bookings</div>
+        </div>
+        <div class="glass p-6 rounded-lg text-center">
+            <div class="text-2xl font-bold text-yellow-400 mb-2" id="systemUptime">0%</div>
+            <div class="text-sm text-gray-400">System Uptime</div>
+        </div>
+    </div>
+
+    <!-- Recent Reports -->
+    <div class="glass p-6 rounded-lg">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold">Recent Reports</h3>
+            <button onclick="refreshRecentReports()" class="text-yellow-400 hover:text-yellow-300 transition">
+                <i class="fas fa-sync-alt mr-2"></i>Refresh
+            </button>
+        </div>
+        <div class="space-y-3" id="recentReportsContainer">
+            <div class="text-center py-8 text-gray-400">
+                <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                <div>Loading recent reports...</div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+// Load dashboard data on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardStats();
+    loadRecentReports();
+});
+
+function loadDashboardStats() {
+    // Load financial summary
+    fetch('/admin/api/reports/financial/initial')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.error) {
+                document.getElementById('totalRevenue').textContent = 
+                    `LKR ${data.totalRevenue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            }
+        })
+        .catch(error => console.error('Error loading financial data:', error));
+    
+    // Load occupancy summary
+    fetch('/admin/api/reports/occupancy/initial')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.error) {
+                document.getElementById('avgOccupancy').textContent = data.avgOccupancy + '%';
+                document.getElementById('totalBookings').textContent = data.totalBookings.toLocaleString();
+            }
+        })
+        .catch(error => console.error('Error loading occupancy data:', error));
+    
+    // Load performance summary
+    fetch('/admin/api/reports/performance/initial')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.error) {
+                document.getElementById('systemUptime').textContent = data.systemUptime + '%';
+            }
+        })
+        .catch(error => console.error('Error loading performance data:', error));
+}
+
+function loadRecentReports() {
+    fetch('/admin/api/reports')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.error && data.reports) {
+                displayRecentReports(data.reports);
+            } else {
+                showNoReportsMessage();
+            }
+        })
+        .catch(error => {
+            console.error('Error loading recent reports:', error);
+            showNoReportsMessage();
+        });
+}
+
+function displayRecentReports(reports) {
+    const container = document.getElementById('recentReportsContainer');
+    
+    if (!reports || reports.length === 0) {
+        showNoReportsMessage();
+        return;
+    }
+    
+    // Sort by generated date (newest first) and take latest 5
+    const sortedReports = reports
+        .sort((a, b) => new Date(b.generatedDate) - new Date(a.generatedDate))
+        .slice(0, 5);
+    
+    const reportHTML = sortedReports.map(report => {
+        const reportType = report.type;
+        const icon = getReportIcon(reportType);
+        const color = getReportColor(reportType);
+        const date = new Date(report.generatedDate);
+        const timeAgo = getTimeAgo(date);
+        
+        return `
+            <div class="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 transition">
+                <div class="flex items-center gap-3">
+                    <i class="${icon} ${color}"></i>
+                    <div>
+                        <div class="font-semibold">${reportType} Report</div>
+                        <div class="text-sm text-gray-400">Generated ${timeAgo} • Report ID: ${report.id}</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="viewReport('${reportType.toLowerCase()}')" class="text-blue-400 hover:text-blue-300 transition" title="View Report">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button onclick="exportReport('${reportType.toLowerCase()}', ${report.id})" class="text-green-400 hover:text-green-300 transition" title="Export Report">
+                        <i class="fas fa-download"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = reportHTML;
+}
+
+function showNoReportsMessage() {
+    const container = document.getElementById('recentReportsContainer');
+    container.innerHTML = `
+        <div class="text-center py-8 text-gray-400">
+            <i class="fas fa-file-alt text-2xl mb-2"></i>
+            <div>No reports generated yet</div>
+            <div class="text-sm mt-2">Generate your first report by selecting a report type above</div>
+        </div>
+    `;
+}
+
+function getReportIcon(type) {
+    switch(type.toLowerCase()) {
+        case 'financial': return 'fas fa-file-invoice-dollar';
+        case 'occupancy': return 'fas fa-parking';
+        case 'performance': return 'fas fa-chart-line';
+        default: return 'fas fa-file-alt';
+    }
+}
+
+function getReportColor(type) {
+    switch(type.toLowerCase()) {
+        case 'financial': return 'text-green-400';
+        case 'occupancy': return 'text-blue-400';
+        case 'performance': return 'text-purple-400';
+        default: return 'text-gray-400';
+    }
+}
+
+function getTimeAgo(date) {
+    const now = new Date();
+    const diffInMs = now - date;
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    const diffInDays = Math.floor(diffInHours / 24);
+    
+    if (diffInHours < 1) {
+        const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+        return diffInMinutes <= 1 ? 'just now' : `${diffInMinutes} minutes ago`;
+    } else if (diffInHours < 24) {
+        return diffInHours === 1 ? '1 hour ago' : `${diffInHours} hours ago`;
+    } else {
+        return diffInDays === 1 ? '1 day ago' : `${diffInDays} days ago`;
+    }
+}
+
+function viewReport(reportType) {
+    window.location.href = `/admin/report/${reportType}`;
+}
+
+function exportReport(reportType, reportId) {
+    // For now, redirect to the report page where they can export
+    // In the future, this could directly trigger export based on report ID
+    window.location.href = `/admin/report/${reportType}`;
+}
+
+function refreshRecentReports() {
+    const container = document.getElementById('recentReportsContainer');
+    container.innerHTML = `
+        <div class="text-center py-8 text-gray-400">
+            <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+            <div>Refreshing reports...</div>
+        </div>
+    `;
+    loadRecentReports();
+}
+
+function refreshDashboard() {
+    loadDashboardStats();
+    loadRecentReports();
+}
+
+function generateQuickReport(reportType) {
+    // Calculate date ranges for quick reports
+    const endDate = new Date();
+    let startDate = new Date();
+    
+    switch(reportType) {
+        case 'financial':
+            startDate.setDate(endDate.getDate() - 30); // Last 30 days
+            break;
+        case 'occupancy':
+            startDate.setDate(endDate.getDate() - 7); // Last 7 days
+            break;
+        case 'performance':
+            startDate.setDate(endDate.getDate() - 7); // Last 7 days
+            break;
+    }
+    
+    const startDateStr = startDate.toISOString().split('T')[0];
+    const endDateStr = endDate.toISOString().split('T')[0];
+    
+    // Redirect to report page with date parameters
+    window.location.href = `/admin/report/${reportType}?startDate=${startDateStr}&endDate=${endDateStr}&quickGenerate=true`;
+}
+
+// Auto-refresh every 5 minutes
+setInterval(refreshDashboard, 300000);
+</script>
+
+</body>
+</html>

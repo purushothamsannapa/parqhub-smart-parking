@@ -1,0 +1,37 @@
+# Build and compiled files
+target/
+bin/
+build/
+*.class
+
+# Maven wrapper jar
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE and Editor files
+.idea/
+*.iws
+*.iml
+*.ipr
+.project
+.classpath
+.settings/
+.springBeans
+.sts4-cache
+.apt_generated
+.factorypath
+/nbproject/
+/nbbuild/
+/dist/
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Local scripts & temp artifacts
+powershell.cmd
+*.log
+cookies.txt
+user_cookies.txt
+.DS_Store
+Thumbs.db

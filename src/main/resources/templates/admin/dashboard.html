@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParQHub - Admin Dashboard</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #0a0f1c; }
+        .glass {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .active {
+            background: linear-gradient(90deg, #ffb703, #ff6600);
+            color: #0a0f1c !important;
+            font-weight: bold;
+        }
+        .chart-container {
+            max-width: 400px;
+            margin: auto;
+        }
+    </style>
+</head>
+<body class="text-white flex">
+<!-- Sidebar -->
+<aside class="w-72 h-screen glass flex flex-col fixed">
+    <div class="p-6 flex items-center gap-3 border-b border-gray-700">
+        <img src="/images/logo.svg" alt="ParQHub" class="h-10">
+        <span class="text-2xl font-bold">ParQHub</span>
+    </div>
+    <nav class="flex-1 p-4 space-y-2">
+        <a href="/admin/dashboard" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 transition active"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="/admin/tables" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 transition"><i class="fas fa-table"></i> Table View</a>
+        <a href="/admin/parking-viewer" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 transition"><i class="fas fa-parking"></i> Parking Viewer</a>
+        <a href="/admin/reports" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-chart-bar"></i> Report View</a>
+
+        <!-- Role-based Links -->
+        <div th:if="${adminRole.name() == 'OPERATIONS_MANAGER'}">
+            <a href="/admin/slot-availability" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-parking"></i> Slot Availability</a>
+            <a href="/admin/staff-assignment" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-user-cog"></i> Staff Assignment</a>
+            <a href="/admin/performance-summaries" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-chart-line"></i> Performance Summaries</a>
+            <a href="/admin/live-slot-usage" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-tachometer-alt"></i> Live Slot Usage</a>
+        </div>
+        <div th:if="${adminRole.name() == 'CUSTOMER_SERVICE_OFFICER'}">
+            <a href="/admin/booking-details" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-ticket-alt"></i> Booking Details</a>
+            <a href="/admin/incident-logging" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-exclamation-triangle"></i> Incident Logging</a>
+            <a href="/admin/system-alerts" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-bell"></i> System Alerts</a>
+            <a href="/admin/complaint-history" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-history"></i> Complaint History</a>
+        </div>
+        <div th:if="${adminRole.name() == 'IT_SUPPORT'}">
+            <a href="/admin/backend-configurations" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-cogs"></i> Backend Configurations</a>
+            <a href="/admin/system-uptime" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-server"></i> System Uptime</a>
+            <a href="/admin/password-reset" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-key"></i> Password Reset</a>
+            <a href="/admin/error-logs" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-bug"></i> Error Logs</a>
+        </div>
+        <div th:if="${adminRole.name() == 'FINANCE_OFFICER'}">
+            <a href="/admin/financial-reports" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-file-invoice-dollar"></i> Financial Reports</a>
+            <a href="/admin/transaction-history" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-history"></i> Transaction History</a>
+            <a href="/admin/revenue-breakdown" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-chart-pie"></i> Revenue Breakdown</a>
+            <a href="/admin/export-reports" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-file-export"></i> Export Reports</a>
+        </div>
+        <div th:if="${adminRole.name() == 'SECURITY_SUPERVISOR'}">
+            <a href="/admin/vehicle-registration" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-car"></i> Vehicle Registration</a>
+            <a href="/admin/overstay-alerts" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-bell"></i> Overstay Alerts</a>
+            <a href="/admin/unauthorized-vehicles" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-flag"></i> Unauthorized Vehicles</a>
+            <a href="/admin/vehicle-movement-logs" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-clipboard-list"></i> Vehicle Movement Logs</a>
+        </div>
+        <div th:if="${adminRole.name() == 'SUPER_ADMIN'}">
+            <a href="/admin/super-admin-panel" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 font-bold"><i class="fas fa-crown"></i> Super Admin Panel</a>
+        </div>
+    </nav>
+    <div class="p-4 border-t border-gray-700">
+        <a th:href="@{/admin/logout}" class="flex items-center gap-3 p-3 rounded-lg hover:bg-red-500/30 text-red-400"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+</aside>
+
+<!-- Main Content -->
+<main class="ml-72 w-full p-6">
+    <!-- Top Bar -->
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">Dashboard Overview</h1>
+        <div class="flex items-center gap-4">
+            <span class="text-gray-300">Welcome, <span th:text="${adminName}">Admin</span></span>
+            <img src="/images/admin-avatar.png" alt="Admin" class="h-10 w-10 rounded-full border-2 border-yellow-400">
+        </div>
+    </div>
+
+    <!-- Role-based Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div th:if="${adminRole.name() == 'OPERATIONS_MANAGER' || adminRole.name() == 'SUPER_ADMIN'}">
+            <div class="glass p-6 rounded-2xl text-center">
+                <i class="fas fa-parking text-yellow-400 text-3xl mb-2"></i>
+                <h3 class="text-lg font-semibold">Active Slots</h3>
+                <p class="text-2xl font-bold" th:text="${totalActiveSlots ?: '0'}">0</p>
+            </div>
+        </div>
+        <div th:if="${adminRole.name() == 'FINANCE_OFFICER' || adminRole.name() == 'SUPER_ADMIN'}">
+            <div class="glass p-6 rounded-2xl text-center">
+                <i class="fas fa-dollar-sign text-green-400 text-3xl mb-2"></i>
+                <h3 class="text-lg font-semibold">Today’s Revenue</h3>
+                <p class="text-2xl font-bold" th:text="'LKR ' + ${#numbers.formatDecimal(todayRevenue, 1, 2)}">LKR 0.00</p>
+            </div>
+        </div>
+        <div th:if="${adminRole.name() == 'CUSTOMER_SERVICE_OFFICER' || adminRole.name() == 'SUPER_ADMIN'}">
+            <div class="glass p-6 rounded-2xl text-center">
+                <i class="fas fa-users text-blue-400 text-3xl mb-2"></i>
+                <h3 class="text-lg font-semibold">Registered Users</h3>
+                <p class="text-2xl font-bold" th:text="${totalUsers ?: '0'}">0</p>
+            </div>
+        </div>
+        <div th:if="${adminRole.name() == 'SECURITY_SUPERVISOR' || adminRole.name() == 'CUSTOMER_SERVICE_OFFICER' || adminRole.name() == 'SUPER_ADMIN'}">
+            <div class="glass p-6 rounded-2xl text-center">
+                <i class="fas fa-exclamation-circle text-red-400 text-3xl mb-2"></i>
+                <h3 class="text-lg font-semibold">Security Incidents</h3>
+                <p class="text-2xl font-bold" th:text="${securityIncidents ?: '0'}">0</p>
+            </div>
+        </div>
+        <div th:if="${adminRole.name() == 'IT_SUPPORT' || adminRole.name() == 'SUPER_ADMIN'}">
+            <div class="glass p-6 rounded-2xl text-center">
+                <i class="fas fa-server text-purple-400 text-3xl mb-2"></i>
+                <h3 class="text-lg font-semibold">System Uptime</h3>
+                <p class="text-2xl font-bold" th:text="${systemUptime ?: 'N/A'}">N/A</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <a href="/admin/tables" class="glass p-6 rounded-2xl hover:bg-yellow-400/10 transition cursor-pointer">
+            <div class="flex items-center justify-between mb-4">
+                <i class="fas fa-table text-blue-400 text-3xl"></i>
+                <span class="text-sm text-gray-400">Manage</span>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">Table Management</h3>
+            <p class="text-gray-400 text-sm">View and manage all database tables</p>
+        </a>
+        <a href="/admin/parking-viewer" class="glass p-6 rounded-2xl hover:bg-yellow-400/10 transition cursor-pointer">
+            <div class="flex items-center justify-between mb-4">
+                <i class="fas fa-parking text-green-400 text-3xl"></i>
+                <span class="text-sm text-gray-400">View</span>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">Parking Viewer</h3>
+            <p class="text-gray-400 text-sm">Real-time parking slot monitoring</p>
+        </a>
+        <a href="/admin/reports" class="glass p-6 rounded-2xl hover:bg-yellow-400/10 transition cursor-pointer">
+            <div class="flex items-center justify-between mb-4">
+                <i class="fas fa-chart-bar text-purple-400 text-3xl"></i>
+                <span class="text-sm text-gray-400">View</span>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">Reports</h3>
+            <p class="text-gray-400 text-sm">Generate and view system reports</p>
+        </a>
+    </div>
+
+    <!-- Dashboard Content with Charts -->
+    <section class="glass p-8 rounded-2xl">
+        <h2 class="text-xl font-bold mb-4">📊 Dashboard Summary</h2>
+        <div th:switch="${adminRole.name()}">
+            <div th:case="'OPERATIONS_MANAGER'">
+                <p class="text-gray-300 mb-4">Monitor slot availability and live slot usage.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="font-semibold mb-2">Available Slots by City</h3>
+                        <div class="chart-container">
+                            <canvas id="slotsChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 gap-4">
+                        <div th:each="entry : ${availableSlotsByCity}" class="glass p-4 rounded-lg">
+                            <h3 class="font-semibold mb-2" th:text="${entry.key} + ' Slots'">City Slots</h3>
+                            <p class="text-gray-400">Available: <span class="text-green-400 font-bold" th:text="${entry.value}">0</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div th:case="'CUSTOMER_SERVICE_OFFICER'">
+                <p class="text-gray-300 mb-4">View customer bookings and incidents.</p>
+                <div class="grid grid-cols-1 gap-4">
+                    <div class="glass p-4 rounded-lg">
+                        <h3 class="font-semibold mb-2">Pending Bookings</h3>
+                        <p class="text-gray-400">Count: <span class="text-blue-400 font-bold" th:text="${pendingBookings ?: '0'}">0</span></p>
+                    </div>
+                </div>
+            </div>
+            <div th:case="'IT_SUPPORT'">
+                <p class="text-gray-300 mb-4">Monitor system uptime and error logs.</p>
+                <div class="grid grid-cols-1 gap-4">
+                    <div class="glass p-4 rounded-lg">
+                        <h3 class="font-semibold mb-2">Error Logs</h3>
+                        <p class="text-gray-400">Count: <span class="text-red-400 font-bold" th:text="${errorLogs ?: '0'}">0</span></p>
+                    </div>
+                </div>
+            </div>
+            <div th:case="'FINANCE_OFFICER'">
+                <p class="text-gray-300 mb-4">Track revenue and pending payments.</p>
+                <div class="grid grid-cols-1 gap-4">
+                    <div class="glass p-4 rounded-lg">
+                        <h3 class="font-semibold mb-2">Pending Payments</h3>
+                        <p class="text-gray-400">Count: <span class="text-yellow-400 font-bold" th:text="${pendingPayments ?: '0'}">0</span></p>
+                    </div>
+                </div>
+            </div>
+            <div th:case="'SECURITY_SUPERVISOR'">
+                <p class="text-gray-300 mb-4">Monitor vehicle activity and security incidents.</p>
+                <div class="grid grid-cols-1 gap-4">
+                    <div class="glass p-4 rounded-lg">
+                        <h3 class="font-semibold mb-2">Active Vehicles</h3>
+                        <p class="text-gray-400">Count: <span class="text-green-400 font-bold" th:text="${activeVehicles ?: '0'}">0</span></p>
+                    </div>
+                </div>
+            </div>
+            <div th:case="'SUPER_ADMIN'">
+                <p class="text-gray-300 mb-4">Access all system metrics.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="font-semibold mb-2">Available Slots by City</h3>
+                        <div class="chart-container">
+                            <canvas id="slotsChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 gap-4">
+                        <div th:each="entry : ${availableSlotsByCity}" class="glass p-4 rounded-lg">
+                            <h3 class="font-semibold mb-2" th:text="${entry.key} + ' Slots'">City Slots</h3>
+                            <p class="text-gray-400">Available: <span class="text-green-400 font-bold" th:text="${entry.value}">0</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Chart.js Script with Live Data Integration -->
+    <script th:inline="javascript">
+        let refreshInterval;
+        let charts = {};
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initialize dashboard with live data
+            loadDashboardData();
+            
+            // Set up auto-refresh every 30 seconds
+            refreshInterval = setInterval(loadDashboardData, 30000);
+            
+            // Update last refresh time
+            updateLastRefreshTime();
+        });
+
+        function refreshDashboard() {
+            const refreshIcon = document.getElementById('refreshIcon');
+            if (refreshIcon) {
+                refreshIcon.classList.add('fa-spin');
+            }
+            
+            loadDashboardData().then(() => {
+                if (refreshIcon) {
+                    refreshIcon.classList.remove('fa-spin');
+                }
+                updateLastRefreshTime();
+            });
+        }
+
+        function updateLastRefreshTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString();
+            const lastUpdateElement = document.getElementById('lastUpdateTime');
+            if (lastUpdateElement) {
+                lastUpdateElement.textContent = timeString;
+            }
+        }
+
+        async function loadDashboardData() {
+            try {
+                // Load performance metrics
+                await loadPerformanceData();
+                
+                // Load financial data if applicable
+                const adminRole = /*[[${adminRole.name()}]]*/ 'SUPER_ADMIN';
+                if (adminRole === 'FINANCE_OFFICER' || adminRole === 'SUPER_ADMIN') {
+                    await loadFinancialData();
+                }
+                
+                // Load occupancy data if applicable
+                if (adminRole === 'OPERATIONS_MANAGER' || adminRole === 'SUPER_ADMIN') {
+                    await loadOccupancyData();
+                }
+                
+                // Load activity feed
+                await loadActivityFeed();
+                
+                // Update charts
+                updateCharts();
+                
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+            }
+        }
+
+        async function loadPerformanceData() {
+            try {
+                const response = await fetch('/admin/api/reports/performance/initial');
+                const data = await response.json();
+                
+                if (!data.error) {
+                    updateElement('systemPerformance', Math.round(data.bookingSuccessRate || 0) + '%');
+                    updateElement('responseTime', (data.avgResponseTime || 'N/A') + 'ms');
+                    updateElement('utilizationRate', Math.round(data.currentOccupancyRate || 0) + '%');
+                    updateElement('errorRate', Math.round(data.errorRate || 0) + '%');
+                }
+            } catch (error) {
+                console.error('Error loading performance data:', error);
+            }
+        }
+
+        async function loadFinancialData() {
+            try {
+                const response = await fetch('/admin/api/reports/financial/initial');
+                const data = await response.json();
+                
+                if (!data.error) {
+                    updateElement('totalRevenue', 'LKR ' + formatNumber(data.totalRevenue || 0));
+                    updateElement('avgRevenue', 'LKR ' + formatNumber(data.avgPayment || 0));
+                    updateElement('paymentSuccessRate', Math.round(data.paymentSuccessRate || 0) + '%');
+                    updateElement('pendingPaymentsCount', data.pendingPayments || 0);
+                }
+            } catch (error) {
+                console.error('Error loading financial data:', error);
+            }
+        }
+
+        async function loadOccupancyData() {
+            try {
+                const response = await fetch('/admin/api/reports/occupancy/initial');
+                const data = await response.json();
+                
+                if (!data.error) {
+                    updateElement('availableSlots', data.availableSlots || 0);
+                    updateElement('occupiedSlots', data.occupiedSlots || 0);
+                    updateElement('occupancyRate', Math.round(data.avgOccupancy || 0) + '%');
+                    
+                    // Update city breakdown
+                    updateCityBreakdown(data.cityBreakdown || []);
+                }
+            } catch (error) {
+                console.error('Error loading occupancy data:', error);
+            }
+        }
+
+        async function loadActivityFeed() {
+            try {
+                const response = await fetch('/admin/api/reports');
+                const data = await response.json();
+                
+                if (!data.error && data.reports) {
+                    updateActivityFeed(data.reports.slice(0, 5));
+                }
+            } catch (error) {
+                console.error('Error loading activity feed:', error);
+            }
+        }
+
+        function updateElement(id, value) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = value;
+            }
+        }
+
+        function updateCityBreakdown(cityData) {
+            const container = document.getElementById('cityBreakdownContainer');
+            if (!container) return;
+            
+            if (cityData.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-400">No city data available</div>';
+                return;
+            }
+            
+            container.innerHTML = cityData.map(city => `
+                <div class="flex justify-between items-center p-2 glass rounded">
+                    <span class="text-sm">${city.city}</span>
+                    <span class="text-green-400 font-bold">${city.available || 0}</span>
+                </div>
+            `).join('');
+        }
+
+        function updateActivityFeed(reports) {
+            const container = document.getElementById('activityFeed');
+            if (!container) return;
+            
+            if (reports.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-400 py-4">No recent activity</div>';
+                return;
+            }
+            
+            container.innerHTML = reports.map(report => {
+                const date = new Date(report.generatedDate).toLocaleString();
+                return `
+                    <div class="flex items-center justify-between p-3 glass rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-chart-bar text-yellow-400"></i>
+                            <div>
+                                <p class="font-semibold">${report.type} Report Generated</p>
+                                <p class="text-sm text-gray-400">${date}</p>
+                            </div>
+                        </div>
+                        <span class="text-green-400 text-sm">Completed</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateCharts() {
+            const adminRole = /*[[${adminRole.name()}]]*/ 'SUPER_ADMIN';
+            
+            // Update slots chart
+            if (document.getElementById('slotsChart')) {
+                updateSlotsChart();
+            }
+            
+            // Update revenue chart
+            if (document.getElementById('revenueChart')) {
+                updateRevenueChart();
+            }
+        }
+
+        function updateSlotsChart() {
+            const ctx = document.getElementById('slotsChart');
+            if (!ctx) return;
+            
+            if (charts.slotsChart) {
+                charts.slotsChart.destroy();
+            }
+            
+            const slotData = /*[[${availableSlotsByCity}]]*/ {};
+            const labels = Object.keys(slotData);
+            const data = Object.values(slotData);
+            
+            charts.slotsChart = new Chart(ctx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Available Slots',
+                        data: data,
+                        backgroundColor: [
+                            'rgba(255, 183, 3, 0.8)',
+                            'rgba(34, 197, 94, 0.8)',
+                            'rgba(59, 130, 246, 0.8)',
+                            'rgba(168, 85, 247, 0.8)'
+                        ],
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: 'white' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateRevenueChart() {
+            const ctx = document.getElementById('revenueChart');
+            if (!ctx) return;
+            
+            if (charts.revenueChart) {
+                charts.revenueChart.destroy();
+            }
+            
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            const revenueData = [12000, 15000, 18000, 14000, 22000, 25000, 20000];
+            
+            charts.revenueChart = new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: days,
+                    datasets: [{
+                        label: 'Revenue (LKR)',
+                        data: revenueData,
+                        backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                        borderColor: 'rgba(34, 197, 94, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            ticks: { color: 'white' }
+                        },
+                        x: { ticks: { color: 'white' } }
+                    },
+                    plugins: {
+                        legend: { labels: { color: 'white' } }
+                    }
+                }
+            });
+        }
+
+        function formatNumber(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num.toLocaleString();
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+        });
+    </script>
+</main>
+</body>
+</html>

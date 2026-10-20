@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParQHub - Manage Parking Slot</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #0a0f1c; }
+        .glass {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .active {
+            background: linear-gradient(90deg, #ffb703, #ff6600);
+            color: #0a0f1c !important;
+            font-weight: bold;
+        }
+        .slot {
+            width: 80px;
+            height: 60px;
+            border: 2px solid #374151;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            visibility: visible;
+            opacity: 1;
+        }
+        .slot.available {
+            background-color: #10b981;
+            color: white;
+            border-color: #059669;
+        }
+        .slot.booked {
+            background-color: #3b82f6;
+            color: white;
+            border-color: #2563eb;
+        }
+        .slot.occupied {
+            background-color: #ef4444;
+            color: white;
+            border-color: #dc2626;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .notification-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 8px;
+        }
+        .notification-table th, .notification-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .notification-table th {
+            background: rgba(255, 255, 255, 0.05);
+            font-weight: 600;
+            color: #d1d5db;
+        }
+        .notification-table td {
+            color: #e5e7eb;
+        }
+        .info-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 16px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .info-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body class="text-white flex">
+
+<!-- Sidebar (unchanged) -->
+<aside class="w-72 h-screen glass flex flex-col fixed">
+    <div class="p-6 flex items-center gap-3 border-b border-gray-700">
+        <img src="/images/logo.svg" alt="ParQHub" class="h-10">
+        <span class="text-2xl font-bold">ParQHub</span>
+    </div>
+    <nav class="flex-1 p-4 space-y-2">
+        <a href="/admin/dashboard" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 transition"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="/admin/tables" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 transition"><i class="fas fa-table"></i> Table View</a>
+        <a href="/admin/parking-viewer" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 transition active"><i class="fas fa-parking"></i> Parking Viewer</a>
+        <a href="/admin/reports" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-chart-bar"></i> Report View</a>
+
+        <div th:if="${adminRole.name() == 'OPERATIONS_MANAGER'}">
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-parking"></i> Slot Availability</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-user-cog"></i> Staff Assignment</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-chart-line"></i> Performance Summaries</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-tachometer-alt"></i> Live Slot Usage</a>
+        </div>
+        <div th:if="${adminRole.name() == 'CUSTOMER_SERVICE_OFFICER'}">
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-ticket-alt"></i> Booking Details</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-exclamation-triangle"></i> Incident Logging</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-bell"></i> System Alerts</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-history"></i> Complaint History</a>
+        </div>
+        <div th:if="${adminRole.name() == 'IT_SUPPORT'}">
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-cogs"></i> Backend Configurations</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-server"></i> System Uptime</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-key"></i> Password Reset</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-bug"></i> Error Logs</a>
+        </div>
+        <div th:if="${adminRole.name() == 'FINANCE_OFFICER'}">
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-file-invoice-dollar"></i> Financial Reports</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-history"></i> Transaction History</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-chart-pie"></i> Revenue Breakdown</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-file-export"></i> Export Reports</a>
+        </div>
+        <div th:if="${adminRole.name() == 'SECURITY_SUPERVISOR'}">
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-car"></i> Vehicle Registration</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-bell"></i> Overstay Alerts</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-flag"></i> Unauthorized Vehicles</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-clipboard-list"></i> Vehicle Movement Logs</a>
+        </div>
+        <div th:if="${adminRole.name() == 'SUPER_ADMIN'}">
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 font-bold"><i class="fas fa-crown"></i> Super Admin Panel</a>
+        </div>
+    </nav>
+    <div class="p-4 border-t border-gray-700">
+        <a th:href="@{/admin/logout}" class="flex items-center gap-3 p-3 rounded-lg hover:bg-red-500/30 text-red-400"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+</aside>
+
+<!-- Main Content -->
+<main class="ml-72 w-full p-6">
+    <!-- Top bar -->
+    <div class="flex justify-between items-center mb-6">
+        <div class="flex items-center gap-4">
+            <a href="/admin/parking-viewer" class="text-yellow-400 hover:text-yellow-300 transition">
+                <i class="fas fa-arrow-left text-xl"></i>
+            </a>
+            <h1 class="text-2xl font-bold">Manage Parking Slot</h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <span class="text-gray-300">Welcome, <span th:text="${adminName}">Admin</span></span>
+            <img src="/images/admin-avatar.png" alt="Admin" class="h-10 w-10 rounded-full border-2 border-yellow-400">
+        </div>
+    </div>
+
+    <!-- Slot Information -->
+    <div class="glass p-6 rounded-lg mb-6">
+        <h2 class="text-xl font-bold mb-4">Slot Information</h2>
+        <div class="flex items-center gap-6 mb-6">
+            <div th:if="${slot}" class="slot" th:classappend="${slot.status.name().toLowerCase()}" th:text="${slot.id}">
+                Slot ID
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold" th:text="|Slot #${slot?.id ?: 'N/A'}|">Slot #</h3>
+                <p class="text-gray-400" th:text="|Status: ${slot?.status ?: 'N/A'}|">Status: </p>
+                <p class="text-gray-400" th:text="|Location: ${slot?.parkingLot?.city ?: 'N/A'} - ${slot?.parkingLot?.location ?: 'N/A'}|">Location: </p>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="flex gap-6 justify-start mb-6">
+            <div class="legend-item">
+                <div class="slot available"></div>
+                <span>Available</span>
+            </div>
+            <div class="legend-item">
+                <div class="slot booked"></div>
+                <span>Booked</span>
+            </div>
+            <div class="legend-item">
+                <div class="slot occupied"></div>
+                <span>Occupied</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Information -->
+    <div th:if="${booking}" class="glass p-6 rounded-lg mb-6">
+        <h2 class="text-xl font-bold mb-6">Booking Information</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="info-card">
+                <h3 class="text-lg font-semibold mb-4 text-yellow-400 flex items-center">
+                    <i class="fas fa-user mr-2"></i> Customer Details
+                </h3>
+                <div class="space-y-3">
+                    <p class="flex items-center">
+                        <i class="fas fa-user-circle text-gray-400 mr-2"></i>
+                        <span class="font-medium text-gray-300">Name:</span>
+                        <span class="ml-2" th:text="${customer?.name ?: 'N/A'}">Customer Name</span>
+                    </p>
+                    <p class="flex items-center">
+                        <i class="fas fa-envelope text-gray-400 mr-2"></i>
+                        <span class="font-medium text-gray-300">Email:</span>
+                        <span class="ml-2" th:text="${customer?.email ?: 'N/A'}">Customer Email</span>
+                    </p>
+                    <p class="flex items-center">
+                        <i class="fas fa-phone text-gray-400 mr-2"></i>
+                        <span class="font-medium text-gray-300">Phone:</span>
+                        <span class="ml-2" th:text="${customer?.contactNo ?: 'N/A'}">Customer Phone</span>
+                    </p>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3 class="text-lg font-semibold mb-4 text-yellow-400 flex items-center">
+                    <i class="fas fa-car mr-2"></i> Vehicle Details
+                </h3>
+                <div class="space-y-3">
+                    <p class="flex items-center">
+                        <i class="fas fa-id-card text-gray-400 mr-2"></i>
+                        <span class="font-medium text-gray-300">Plate Number:</span>
+                        <span class="ml-2" th:text="${vehicle?.vehicleNo ?: 'N/A'}">Plate Number</span>
+                    </p>
+                    <p class="flex items-center">
+                        <i class="fas fa-car-side text-gray-400 mr-2"></i>
+                        <span class="font-medium text-gray-300">Model:</span>
+                        <span class="ml-2" th:text="${vehicle?.model ?: 'N/A'}">Vehicle Model</span>
+                    </p>
+                    <p class="flex items-center">
+                        <i class="fas fa-palette text-gray-400 mr-2"></i>
+                        <span class="font-medium text-gray-300">Color:</span>
+                        <span class="ml-2" th:text="${vehicle?.color ?: 'N/A'}">Vehicle Color</span>
+                    </p>
+                </div>
+            </div>
+            <div class="info-card">
+                <h3 class="text-lg font-semibold mb-4 text-yellow-400 flex items-center">
+                    <i class="fas fa-ticket-alt mr-2"></i> Booking Details
+                </h3>
+                <div class="space-y-3">
+                    <p class="flex items-center">
+                        <i class="fas fa-clock text-gray-400 mr-2"></i>
+                        <span class="font-medium text-gray-300">Start Time:</span>
+                        <span class="ml-2" th:text="${booking?.startTime != null ? #temporals.format(booking?.startTime, 'yyyy-MM-dd HH:mm') : 'N/A'}">Start Time</span>
+                    </p>
+                    <p class="flex items-center">
+                        <i class="fas fa-clock text-gray-400 mr-2"></i>
+                        <span class="font-medium text-gray-300">End Time:</span>
+                        <span class="ml-2" th:text="${booking?.endTime != null ? #temporals.format(booking?.endTime, 'yyyy-MM-dd HH:mm') : 'Ongoing'}">End Time</span>
+                    </p>
+                    <p class="flex items-center">
+                        <i class="fas fa-hourglass-half text-gray-400 mr-2"></i>
+                        <span class="font-medium text-gray-300">Duration:</span>
+                        <span class="ml-2" th:text="${booking?.getFormattedDuration() ?: 'N/A'}">Duration</span>
+                    </p>
+                    <p class="flex items-center">
+                        <i class="fas fa-money-check-alt text-gray-400 mr-2"></i>
+                        <span class="font-medium text-gray-300">Payment Status:</span>
+                        <span class="ml-2" th:text="${booking?.paymentStatus ?: 'N/A'}">Payment Status</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification History -->
+    <div th:if="${notifications != null && !notifications.isEmpty()}" class="glass p-6 rounded-lg mb-6">
+        <h2 class="text-xl font-bold mb-6">Notification History</h2>
+        <div class="overflow-x-auto">
+            <table class="notification-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Description</th>
+                        <th>Timestamp</th>
+                        <th>Sent By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="notification : ${notifications}">
+                        <td th:text="${notification.type}">Type</td>
+                        <td th:text="${notification.description}">Description</td>
+                        <td th:text="${notification.timestamp != null ? #temporals.format(notification.timestamp, 'yyyy-MM-dd HH:mm') : 'N/A'}">Timestamp</td>
+                        <td th:text="${notification.admin?.name ?: 'N/A'}">Admin Name</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Send Notification -->
+    <div th:if="${booking}" class="glass p-6 rounded-lg">
+        <h2 class="text-xl font-bold mb-4">Send Notification</h2>
+        <form id="notificationForm" class="space-y-4">
+            <input type="hidden" id="slotId" th:value="${slot?.id ?: ''}" />
+            <div>
+                <label for="notificationType" class="block text-sm font-medium text-gray-300 mb-2">Notification Type</label>
+                <select id="notificationType" class="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-yellow-400">
+                    <option value="FULL_SLOT">Full Slot</option>
+                    <option value="OVERSTAY">Overstay</option>
+                    <option value="SECURITY_INCIDENT">Security Incident</option>
+                </select>
+            </div>
+            <div>
+                <label for="description" class="block text-sm font-medium text-gray-300 mb-2">Description</label>
+                <textarea id="description" rows="4" class="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-yellow-400" placeholder="Enter notification description..."></textarea>
+            </div>
+            <div>
+                <button type="button" onclick="sendNotification()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-400 transition font-semibold">
+                    <i class="fas fa-bell mr-2"></i>Send Notification
+                </button>
+            </div>
+        </form>
+        <div id="notificationResult" class="mt-4 hidden"></div>
+    </div>
+
+    <!-- No Booking Message -->
+    <div th:if="${booking == null}" class="glass p-8 rounded-lg text-center">
+        <i class="fas fa-info-circle text-6xl text-gray-600 mb-4"></i>
+        <h3 class="text-xl font-bold mb-2">No Active Booking</h3>
+        <p class="text-gray-400">This parking slot does not have an active booking.</p>
+    </div>
+</main>
+
+<script>
+    function sendNotification() {
+        const slotId = document.getElementById('slotId').value;
+        const notificationType = document.getElementById('notificationType').value;
+        const description = document.getElementById('description').value;
+
+        if (!slotId) {
+            showResult('Slot ID is missing.', 'error');
+            return;
+        }
+
+        if (!description.trim()) {
+            showResult('Please enter a description.', 'error');
+            return;
+        }
+
+        fetch('/admin/send-notification', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                slotId: slotId,
+                notificationType: notificationType,
+                description: description
+            })
+        })
+        .then(response => response.text())
+        .then(data => {
+            showResult(data, 'success');
+            document.getElementById('description').value = '';
+            // Refresh notification history
+            fetchNotifications(slotId);
+        })
+        .catch(error => {
+            showResult('Error sending notification: ' + error.message, 'error');
+        });
+    }
+
+    function showResult(message, type) {
+        const resultDiv = document.getElementById('notificationResult');
+        resultDiv.textContent = message;
+        resultDiv.className = 'mt-4 p-3 rounded-lg ' + (type === 'success' ? 'bg-green-500/30 text-green-300' : 'bg-red-500/30 text-red-300');
+        resultDiv.classList.remove('hidden');
+        
+        // Hide after 5 seconds
+        setTimeout(() => {
+            resultDiv.classList.add('hidden');
+        }, 5000);
+    }
+
+    function fetchNotifications(slotId) {
+        fetch(`/admin/notifications?slotId=${slotId}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.querySelector('.notification-table tbody');
+            tbody.innerHTML = '';
+            data.forEach(notification => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${notification.type}</td>
+                    <td>${notification.description}</td>
+                    <td>${new Date(notification.timestamp).toLocaleString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
+                    <td>${notification.adminName || 'N/A'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching notifications:', error);
+        });
+    }
+
+    // Fetch notifications on page load if slotId exists
+    document.addEventListener('DOMContentLoaded', () => {
+        const slotId = document.getElementById('slotId')?.value;
+        if (slotId) {
+            fetchNotifications(slotId);
+        }
+    });
+</script>
+
+</body>
+</html>

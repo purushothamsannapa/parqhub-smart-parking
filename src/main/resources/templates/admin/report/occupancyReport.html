@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParQHub - Occupancy Report</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #0a0f1c; }
+        .glass {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .active {
+            background: linear-gradient(90deg, #ffb703, #ff6600);
+            color: #0a0f1c !important;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="text-white flex">
+
+<!-- Sidebar -->
+<aside class="w-72 h-screen glass flex flex-col fixed">
+    <div class="p-6 flex items-center gap-3 border-b border-gray-700">
+        <img src="/images/logo.svg" alt="ParQHub" class="h-10">
+        <span class="text-2xl font-bold">ParQHub</span>
+    </div>
+    <nav class="flex-1 p-4 space-y-2">
+        <a href="/admin/dashboard" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 transition"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="/admin/tables" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 transition"><i class="fas fa-table"></i> Table View</a>
+        <a href="/admin/parking-viewer" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 transition"><i class="fas fa-parking"></i> Parking Viewer</a>
+        <a href="/admin/reports" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 transition"><i class="fas fa-chart-bar"></i> Report View</a>
+    </nav>
+    <div class="p-4 border-t border-gray-700">
+        <a th:href="@{/admin/logout}" class="flex items-center gap-3 p-3 rounded-lg hover:bg-red-500/30 text-red-400"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+</aside>
+
+<!-- Main Content -->
+<main class="ml-72 w-full p-6">
+    <!-- Top bar -->
+    <div class="flex justify-between items-center mb-6">
+        <div class="flex items-center gap-4">
+            <a href="/admin/reports" class="text-yellow-400 hover:text-yellow-300 transition">
+                <i class="fas fa-arrow-left text-xl"></i>
+            </a>
+            <h1 class="text-2xl font-bold">Occupancy Report</h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <button onclick="exportReportCSV()" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-400 transition font-semibold">
+                <i class="fas fa-download mr-2"></i>Export CSV
+            </button>
+            <button onclick="refreshReport()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-400 transition font-semibold">
+                <i class="fas fa-sync-alt mr-2"></i>Refresh
+            </button>
+            <span class="text-gray-300">Welcome, <span th:text="${adminName}">Admin</span></span>
+        </div>
+    </div>
+
+    <!-- Report Period Selection -->
+    <div class="glass p-6 rounded-lg mb-6">
+        <h2 class="text-xl font-bold mb-4">Report Filters</h2>
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+            <div>
+                <label for="startDate" class="block text-sm font-medium text-gray-300 mb-2">Start Date</label>
+                <input type="date" id="startDate" class="bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-yellow-400 w-full">
+            </div>
+            <div>
+                <label for="endDate" class="block text-sm font-medium text-gray-300 mb-2">End Date</label>
+                <input type="date" id="endDate" class="bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-yellow-400 w-full">
+            </div>
+            <div>
+                <label for="cityFilter" class="block text-sm font-medium text-gray-300 mb-2">City</label>
+                <select id="cityFilter" class="bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-yellow-400 w-full">
+                    <option value="">All Cities</option>
+                </select>
+            </div>
+            <div>
+                <label for="locationFilter" class="block text-sm font-medium text-gray-300 mb-2">Location</label>
+                <select id="locationFilter" class="bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-yellow-400 w-full" disabled>
+                    <option value="">All Locations</option>
+                </select>
+            </div>
+            <button onclick="generateReport()" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-400 transition font-semibold">
+                <i class="fas fa-chart-bar mr-2"></i>Generate Report
+            </button>
+        </div>
+    </div>
+
+    <!-- Occupancy Summary -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="glass p-6 rounded-lg text-center">
+            <div class="text-3xl font-bold text-green-400 mb-2" id="avgOccupancy">85%</div>
+            <div class="text-sm text-gray-400">Avg Occupancy</div>
+        </div>
+        <div class="glass p-6 rounded-lg text-center">
+            <div class="text-3xl font-bold text-blue-400 mb-2" id="totalBookings">1,247</div>
+            <div class="text-sm text-gray-400">Total Bookings</div>
+        </div>
+        <div class="glass p-6 rounded-lg text-center">
+            <div class="text-3xl font-bold text-purple-400 mb-2" id="peakHours">2-4 PM</div>
+            <div class="text-sm text-gray-400">Peak Hours</div>
+        </div>
+        <div class="glass p-6 rounded-lg text-center">
+            <div class="text-3xl font-bold text-yellow-400 mb-2" id="utilizationRate">78%</div>
+            <div class="text-sm text-gray-400">Utilization Rate</div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Hourly Occupancy Chart -->
+        <div class="glass p-6 rounded-lg">
+            <h3 class="text-lg font-bold mb-4">Hourly Occupancy Pattern</h3>
+            <canvas id="hourlyOccupancyChart" width="400" height="200"></canvas>
+        </div>
+
+        <!-- Daily Occupancy Chart -->
+        <div class="glass p-6 rounded-lg">
+            <h3 class="text-lg font-bold mb-4">Daily Occupancy Trend</h3>
+            <canvas id="dailyOccupancyChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+
+    <!-- Parking Lot Performance -->
+    <div class="glass p-6 rounded-lg mb-6">
+        <h3 class="text-lg font-bold mb-4">Parking Lot Performance</h3>
+        <canvas id="lotPerformanceChart" width="800" height="300"></canvas>
+    </div>
+
+    <!-- Slot Status Distribution -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="glass p-6 rounded-lg">
+            <h3 class="text-lg font-bold mb-4">Current Slot Status</h3>
+            <canvas id="slotStatusChart" width="400" height="200"></canvas>
+        </div>
+
+        <div class="glass p-6 rounded-lg">
+            <h3 class="text-lg font-bold mb-4">Booking Duration Distribution</h3>
+            <canvas id="bookingDurationChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+
+    <!-- Top Performing Lots -->
+    <div class="glass p-6 rounded-lg">
+        <h3 class="text-lg font-bold mb-4">Top Performing Parking Lots</h3>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-gray-600">
+                        <th class="text-left py-3 px-4">Rank</th>
+                        <th class="text-left py-3 px-4">Parking Lot</th>
+                        <th class="text-left py-3 px-4">Total Slots</th>
+                        <th class="text-left py-3 px-4">Avg Occupancy</th>
+                        <th class="text-left py-3 px-4">Revenue</th>
+                        <th class="text-left py-3 px-4">Efficiency</th>
+                    </tr>
+                </thead>
+                <tbody id="lotPerformanceTable">
+                    <!-- Lot performance data will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<script>
+// Initialize charts
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+    loadInitialSummary();
+    setDefaultDates();
+    setupLocationFiltering();
+});
+
+function setDefaultDates() {
+    const today = new Date();
+    const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+    
+    document.getElementById('startDate').value = lastMonth.toISOString().split('T')[0];
+    document.getElementById('endDate').value = today.toISOString().split('T')[0];
+}
+
+function initializeCharts() {
+    // Hourly Occupancy Chart
+    const hourlyCtx = document.getElementById('hourlyOccupancyChart').getContext('2d');
+    window.hourlyOccupancyChart = new Chart(hourlyCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Occupancy %',
+                data: [],
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: { color: '#ffffff' }
+                }
+            },
+            scales: {
+                x: { ticks: { color: '#ffffff' } },
+                y: { ticks: { color: '#ffffff' } }
+            }
+        }
+    });
+
+    // Daily Occupancy Chart
+    const dailyCtx = document.getElementById('dailyOccupancyChart').getContext('2d');
+    window.dailyOccupancyChart = new Chart(dailyCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            datasets: [{
+                label: 'Avg Occupancy %',
+                data: [85, 90, 88, 92, 95, 70, 60],
+                backgroundColor: '#10b981'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: { color: '#ffffff' }
+                }
+            },
+            scales: {
+                x: { ticks: { color: '#ffffff' } },
+                y: { ticks: { color: '#ffffff' } }
+            }
+        }
+    });
+
+    // Lot Performance Chart
+    const lotPerformanceCtx = document.getElementById('lotPerformanceChart').getContext('2d');
+    window.lotPerformanceChart = new Chart(lotPerformanceCtx, {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Occupancy %',
+                data: [],
+                backgroundColor: '#8b5cf6'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: { color: '#ffffff' }
+                }
+            },
+            scales: {
+                x: { ticks: { color: '#ffffff' } },
+                y: { ticks: { color: '#ffffff' } }
+            }
+        }
+    });
+
+    // Slot Status Chart
+    const slotStatusCtx = document.getElementById('slotStatusChart').getContext('2d');
+    window.slotStatusChart = new Chart(slotStatusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Available', 'Booked', 'Occupied'],
+            datasets: [{
+                data: [0, 0, 0],
+                backgroundColor: ['#10b981', '#3b82f6', '#ef4444']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: { color: '#ffffff' }
+                }
+            }
+        }
+    });
+
+    // Booking Duration Chart
+    const bookingDurationCtx = document.getElementById('bookingDurationChart').getContext('2d');
+    window.bookingDurationChart = new Chart(bookingDurationCtx, {
+        type: 'pie',
+        data: {
+            labels: ['1-2 Hours', '2-4 Hours', '4-8 Hours', '8+ Hours'],
+            datasets: [{
+                data: [35, 40, 20, 5],
+                backgroundColor: ['#f59e0b', '#3b82f6', '#10b981', '#ef4444']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: { color: '#ffffff' }
+                }
+            }
+        }
+    });
+}
+
+function loadLotPerformance() {
+    // This will be populated by loadInitialSummary() function
+    const tbody = document.getElementById('lotPerformanceTable');
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-400">Loading performance data...</td></tr>';
+}
+
+function loadInitialSummary() {
+    fetch('/admin/api/reports/occupancy/initial')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error('Error loading initial summary:', data.error);
+                return;
+            }
+            updateOccupancySummary(data);
+            updateLocationBreakdown(data.locationBreakdown);
+            updateCharts(data);
+            populateFilterOptions(data.cities, data.cityLocations);
+        })
+        .catch(error => {
+            console.error('Error loading initial summary:', error);
+        });
+}
+
+function populateFilterOptions(cities, cityLocations) {
+    const citySelect = document.getElementById('cityFilter');
+    const locationSelect = document.getElementById('locationFilter');
+    
+    // Clear existing options (except "All Cities")
+    citySelect.innerHTML = '<option value="">All Cities</option>';
+    
+    // Populate cities
+    cities.forEach(city => {
+        const option = document.createElement('option');
+        option.value = city;
+        option.textContent = city.charAt(0).toUpperCase() + city.slice(1);
+        citySelect.appendChild(option);
+    });
+    
+    // Store city-location mapping
+    window.cityLocations = cityLocations;
+}
+
+function setupLocationFiltering() {
+    const citySelect = document.getElementById('cityFilter');
+    const locationSelect = document.getElementById('locationFilter');
+    
+    citySelect.addEventListener('change', function() {
+        const selectedCity = this.value;
+        
+        // Clear location options
+        locationSelect.innerHTML = '<option value="">All Locations</option>';
+        
+        if (selectedCity && window.cityLocations && window.cityLocations[selectedCity]) {
+            locationSelect.disabled = false;
+            window.cityLocations[selectedCity].forEach(location => {
+                const option = document.createElement('option');
+                option.value = location;
+                option.textContent = location.charAt(0).toUpperCase() + location.slice(1);
+                locationSelect.appendChild(option);
+            });
+        } else {
+            locationSelect.disabled = true;
+        }
+    });
+}
+
+function updateOccupancySummary(data) {
+    document.getElementById('avgOccupancy').textContent = data.avgOccupancy + '%';
+    document.getElementById('totalBookings').textContent = data.totalBookings.toLocaleString();
+    document.getElementById('peakHours').textContent = data.peakHours;
+    document.getElementById('utilizationRate').textContent = data.utilizationRate + '%';
+}
+
+function updateLocationBreakdown(locationBreakdown) {
+    const tbody = document.getElementById('lotPerformanceTable');
+    tbody.innerHTML = '';
+
+    if (!locationBreakdown || locationBreakdown.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-400">No location data available.</td></tr>';
+        return;
+    }
+
+    locationBreakdown.forEach((location, index) => {
+        const row = document.createElement('tr');
+        row.className = 'border-b border-gray-700 hover:bg-gray-700/30';
+        
+        const efficiency = location.occupancyRate >= 90 ? 'Excellent' :
+                          location.occupancyRate >= 75 ? 'Good' :
+                          location.occupancyRate >= 50 ? 'Fair' : 'Poor';
+        
+        const efficiencyColor = efficiency === 'Excellent' ? 'text-green-400' :
+                               efficiency === 'Good' ? 'text-blue-400' :
+                               efficiency === 'Fair' ? 'text-yellow-400' : 'text-red-400';
+        
+        // Calculate revenue estimate (simplified)
+        const revenue = (location.totalSlots * location.occupancyRate * 2.5).toFixed(0);
+        
+        row.innerHTML = `
+            <td class="py-3 px-4">${index + 1}</td>
+            <td class="py-3 px-4 capitalize">${location.city} - ${location.location}</td>
+            <td class="py-3 px-4">${location.totalSlots}</td>
+            <td class="py-3 px-4">${location.occupancyRate}%</td>
+            <td class="py-3 px-4">LKR ${revenue}</td>
+            <td class="py-3 px-4 ${efficiencyColor}">${efficiency}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function updateCharts(data) {
+    // Update slot status chart
+    if (window.slotStatusChart && data.availableSlots !== undefined) {
+        window.slotStatusChart.data.datasets[0].data = [
+            data.availableSlots,
+            data.bookedSlots,
+            data.occupiedSlots
+        ];
+        window.slotStatusChart.update();
+    }
+    
+    // Update lot performance chart
+    if (window.lotPerformanceChart && data.locationBreakdown) {
+        const labels = data.locationBreakdown.map(loc => `${loc.city} - ${loc.location}`);
+        const occupancyData = data.locationBreakdown.map(loc => loc.occupancyRate);
+        
+        window.lotPerformanceChart.data.labels = labels;
+        window.lotPerformanceChart.data.datasets[0].data = occupancyData;
+        window.lotPerformanceChart.update();
+    }
+}
+
+function generateReport() {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    const city = document.getElementById('cityFilter').value;
+    const location = document.getElementById('locationFilter').value;
+    
+    if (!startDate || !endDate) {
+        alert('Please select both start and end dates');
+        return;
+    }
+    
+    if (new Date(startDate) > new Date(endDate)) {
+        alert('Start date cannot be after end date');
+        return;
+    }
+    
+    // Show loading state
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating...';
+    button.disabled = true;
+    
+    // Build query parameters
+    let params = `startDate=${startDate}&endDate=${endDate}`;
+    if (city) params += `&city=${encodeURIComponent(city)}`;
+    if (location) params += `&location=${encodeURIComponent(location)}`;
+    
+    // Fetch occupancy report data from backend
+    fetch(`/admin/api/reports/occupancy?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            updateOccupancySummary(data);
+            updateLocationBreakdown(data.locationBreakdown);
+            updateCharts(data);
+            
+            // Show success message
+            showSuccessMessage(`Occupancy report generated successfully! Report ID: ${data.reportId}`);
+        })
+        .catch(error => {
+            console.error('Error generating report:', error);
+            alert('Failed to generate report: ' + error.message);
+        })
+        .finally(() => {
+            // Reset button state
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+}
+
+function exportReportCSV() {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    const city = document.getElementById('cityFilter').value;
+    const location = document.getElementById('locationFilter').value;
+    
+    if (!startDate || !endDate) {
+        alert('Please select date range and generate a report first');
+        return;
+    }
+    
+    // Show loading state
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Exporting...';
+    button.disabled = true;
+    
+    // Build query parameters
+    let params = `startDate=${startDate}&endDate=${endDate}`;
+    if (city) params += `&city=${encodeURIComponent(city)}`;
+    if (location) params += `&location=${encodeURIComponent(location)}`;
+    
+    // Create download link
+    const link = document.createElement('a');
+    link.href = `/admin/api/reports/occupancy/export-csv?${params}`;
+    
+    // Create filename with filters
+    let filename = `occupancy-report-${startDate}-to-${endDate}`;
+    if (city) filename += `-${city}`;
+    if (location) filename += `-${location}`;
+    filename += '.csv';
+    
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Reset button state
+    setTimeout(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    }, 1000);
+}
+
+function refreshReport() {
+    // Call generateReport with current date values
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    
+    if (startDate && endDate) {
+        generateReport();
+    } else {
+        // Refresh initial summary
+        loadInitialSummary();
+    }
+}
+
+function showSuccessMessage(message) {
+    // Create a temporary success message
+    const successDiv = document.createElement('div');
+    successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+    successDiv.innerHTML = `<i class="fas fa-check mr-2"></i>${message}`;
+    document.body.appendChild(successDiv);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        if (document.body.contains(successDiv)) {
+            document.body.removeChild(successDiv);
+        }
+    }, 3000);
+}
+</script>
+
+</body>
+</html>

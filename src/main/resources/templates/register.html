@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParQHub - User Registration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/4ad8d5ae3f.js" crossorigin="anonymous"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1c0a00 0%, #2d1b0a 50%, #3d2414 100%);
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(249, 115, 22, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(251, 146, 60, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(234, 88, 12, 0.1) 0%, transparent 50%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            color: #f1f5f9;
+        }
+        
+        .registration-card {
+            background: rgba(30, 20, 10, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(249, 115, 22, 0.2);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(249, 115, 22, 0.1);
+        }
+        
+        .vehicle-card {
+            background: rgba(20, 15, 5, 0.7);
+            border: 1px solid rgba(249, 115, 22, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(249, 115, 22, 0.4);
+        }
+        
+        .form-input {
+            background: rgba(15, 10, 5, 0.7);
+            border: 1px solid rgba(249, 115, 22, 0.3);
+            color: #f1f5f9;
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #f97316;
+            box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2), 0 0 20px rgba(249, 115, 22, 0.1);
+            background: rgba(15, 10, 5, 0.9);
+        }
+        
+        .form-input::placeholder {
+            color: #64748b;
+        }
+        
+        .floating-shapes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+        }
+        
+        .floating-shapes::before {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(249, 115, 22, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            top: -150px;
+            right: -150px;
+            animation: float 8s ease-in-out infinite;
+        }
+        
+        .floating-shapes::after {
+            content: '';
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(234, 88, 12, 0.06) 0%, transparent 70%);
+            border-radius: 50%;
+            bottom: -100px;
+            left: -100px;
+            animation: float 10s ease-in-out infinite reverse;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(180deg); }
+        }
+        
+        .logo-glow {
+            box-shadow: 0 0 25px rgba(249, 115, 22, 0.4);
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen py-8">
+<div class="floating-shapes"></div>
+<div class="registration-card p-8 rounded-xl w-full max-w-2xl mx-4">
+    <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-700 rounded-xl mb-4 logo-glow">
+            <i class="fas fa-user-plus text-2xl text-white"></i>
+        </div>
+        <h1 class="text-3xl font-bold text-white mb-2">Create Account</h1>
+        <p class="text-orange-200">Join ParQHub for seamless parking management</p>
+    </div>
+
+    <!-- Error Message -->
+    <div th:if="${error}" class="bg-red-500/10 border border-red-500/30 text-red-300 p-4 rounded-lg mb-6 backdrop-blur-sm">
+        <div class="flex items-center gap-2">
+            <i class="fas fa-exclamation-circle text-red-400"></i>
+            <p th:text="${error}" class="font-medium">Error</p>
+        </div>
+    </div>
+
+    <!-- Success Message -->
+    <div th:if="${success}" class="bg-green-500/10 border border-green-500/30 text-green-300 p-4 rounded-lg mb-6 backdrop-blur-sm">
+        <div class="flex items-center gap-2">
+            <i class="fas fa-check-circle text-green-400"></i>
+            <p th:text="${success}" class="font-medium">Success</p>
+        </div>
+    </div>
+
+    <!-- Registration Form -->
+    <form th:action="@{/register}" method="post" class="space-y-6">
+        <!-- User Details -->
+        <div class="space-y-4">
+            <div class="flex items-center gap-2 mb-4">
+                <i class="fas fa-user text-orange-400"></i>
+                <h2 class="text-xl font-semibold text-orange-100">Personal Information</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="name" class="block text-sm font-medium text-orange-200 mb-2">
+                        <i class="fas fa-id-card mr-2 text-orange-400"></i>Full Name *
+                    </label>
+                    <input type="text" id="name" name="name" required
+                           class="form-input w-full p-3 rounded-lg focus:outline-none"
+                           placeholder="Enter your full name">
+                </div>
+                <div>
+                    <label for="email" class="block text-sm font-medium text-orange-200 mb-2">
+                        <i class="fas fa-envelope mr-2 text-orange-400"></i>Email Address *
+                    </label>
+                    <input type="email" id="email" name="email" required
+                           class="form-input w-full p-3 rounded-lg focus:outline-none"
+                           placeholder="Enter your email">
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="password" class="block text-sm font-medium text-orange-200 mb-2">
+                        <i class="fas fa-lock mr-2 text-orange-400"></i>Password *
+                    </label>
+                    <input type="password" id="password" name="password" required
+                           class="form-input w-full p-3 rounded-lg focus:outline-none"
+                           placeholder="Create a strong password">
+                </div>
+                <div>
+                    <label for="contactNo" class="block text-sm font-medium text-orange-200 mb-2">
+                        <i class="fas fa-phone mr-2 text-orange-400"></i>Contact Number
+                    </label>
+                    <input type="text" id="contactNo" name="contactNo"
+                           class="form-input w-full p-3 rounded-lg focus:outline-none"
+                           placeholder="Enter your phone number">
+                </div>
+            </div>
+        </div>
+
+        <!-- Vehicle Details -->
+        <div class="space-y-4 mt-8">
+            <div class="flex items-center gap-2 mb-4">
+                <i class="fas fa-car text-orange-400"></i>
+                <h2 class="text-xl font-semibold text-orange-100">Vehicle Information</h2>
+            </div>
+            <div id="vehicle-container" class="space-y-4">
+                <!-- Initial Vehicle Entry -->
+                <div class="vehicle-entry vehicle-card p-6 rounded-lg">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="vehicleNo-0" class="block text-sm font-medium text-orange-200 mb-2">Vehicle Number *</label>
+                            <input type="text" id="vehicleNo-0" name="vehicles[0].vehicleNo" required
+                                   class="form-input w-full p-3 rounded-lg focus:outline-none"
+                                   placeholder="Enter vehicle number">
+                        </div>
+                        <div>
+                            <label for="vehicleType-0" class="block text-sm font-medium text-orange-200 mb-2">Vehicle Type *</label>
+                            <select id="vehicleType-0" name="vehicles[0].vehicleType" required
+                                    class="form-input w-full p-3 rounded-lg focus:outline-none">
+                                <option value="Car">Car</option>
+                                <option value="Bike">Bike</option>
+                                <option value="Van">Van</option>
+                                <option value="Truck">Truck</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="brand-0" class="block text-sm font-medium text-orange-200 mb-2">Brand</label>
+                            <input type="text" id="brand-0" name="vehicles[0].brand"
+                                   class="form-input w-full p-3 rounded-lg focus:outline-none"
+                                   placeholder="Enter brand">
+                        </div>
+                        <div>
+                            <label for="model-0" class="block text-sm font-medium text-orange-200 mb-2">Model</label>
+                            <input type="text" id="model-0" name="vehicles[0].model"
+                                   class="form-input w-full p-3 rounded-lg focus:outline-none"
+                                   placeholder="Enter model">
+                        </div>
+                        <div>
+                            <label for="color-0" class="block text-sm font-medium text-orange-200 mb-2">Color</label>
+                            <input type="text" id="color-0" name="vehicles[0].color"
+                                   class="form-input w-full p-3 rounded-lg focus:outline-none"
+                                   placeholder="Enter color">
+                        </div>
+                    </div>
+                    <button type="button" class="remove-vehicle mt-4 flex items-center gap-2 text-red-400 hover:text-red-300 font-medium transition-colors" style="display: none;">
+                        <i class="fas fa-trash"></i> Remove Vehicle
+                    </button>
+                </div>
+            </div>
+            <button type="button" id="add-vehicle" class="mt-4 flex items-center gap-2 text-orange-400 hover:text-orange-300 font-medium border border-orange-500/30 px-4 py-2 rounded-lg hover:bg-orange-500/10 transition-all">
+                <i class="fas fa-plus"></i> Add Another Vehicle
+            </button>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="text-center pt-6">
+            <button type="submit" class="btn-primary text-white font-semibold py-3 px-8 rounded-lg w-full md:w-auto">
+                <i class="fas fa-user-plus mr-2"></i>Create Account
+            </button>
+        </div>
+    </form>
+
+    <!-- Link to Login -->
+    <div class="mt-8 pt-6 border-t border-orange-800/30 text-center">
+        <p class="text-orange-300">
+            Already have an account? 
+            <a th:href="@{/login}" class="text-orange-400 hover:text-orange-300 font-medium hover:underline transition-colors">Sign in here</a>
+        </p>
+    </div>
+</div>
+
+<!-- JavaScript for Dynamic Vehicle Entries -->
+<script>
+    let vehicleCount = 1;
+
+    document.getElementById('add-vehicle').addEventListener('click', () => {
+        const container = document.getElementById('vehicle-container');
+        const template = `
+                <div class="vehicle-entry vehicle-card p-6 rounded-lg">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="vehicleNo-${vehicleCount}" class="block text-sm font-medium text-orange-200 mb-2">Vehicle Number *</label>
+                            <input type="text" id="vehicleNo-${vehicleCount}" name="vehicles[${vehicleCount}].vehicleNo" required
+                                   class="form-input w-full p-3 rounded-lg focus:outline-none"
+                                   placeholder="Enter vehicle number">
+                        </div>
+                        <div>
+                            <label for="vehicleType-${vehicleCount}" class="block text-sm font-medium text-orange-200 mb-2">Vehicle Type *</label>
+                            <select id="vehicleType-${vehicleCount}" name="vehicles[${vehicleCount}].vehicleType" required
+                                    class="form-input w-full p-3 rounded-lg focus:outline-none">
+                                <option value="Car">Car</option>
+                                <option value="Bike">Bike</option>
+                                <option value="Van">Van</option>
+                                <option value="Truck">Truck</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="brand-${vehicleCount}" class="block text-sm font-medium text-orange-200 mb-2">Brand</label>
+                            <input type="text" id="brand-${vehicleCount}" name="vehicles[${vehicleCount}].brand"
+                                   class="form-input w-full p-3 rounded-lg focus:outline-none"
+                                   placeholder="Enter brand">
+                        </div>
+                        <div>
+                            <label for="model-${vehicleCount}" class="block text-sm font-medium text-orange-200 mb-2">Model</label>
+                            <input type="text" id="model-${vehicleCount}" name="vehicles[${vehicleCount}].model"
+                                   class="form-input w-full p-3 rounded-lg focus:outline-none"
+                                   placeholder="Enter model">
+                        </div>
+                        <div>
+                            <label for="color-${vehicleCount}" class="block text-sm font-medium text-orange-200 mb-2">Color</label>
+                            <input type="text" id="color-${vehicleCount}" name="vehicles[${vehicleCount}].color"
+                                   class="form-input w-full p-3 rounded-lg focus:outline-none"
+                                   placeholder="Enter color">
+                        </div>
+                    </div>
+                    <button type="button" class="remove-vehicle mt-4 flex items-center gap-2 text-red-400 hover:text-red-300 font-medium transition-colors">
+                        <i class="fas fa-trash"></i> Remove Vehicle
+                    </button>
+                </div>
+            `;
+        container.insertAdjacentHTML('beforeend', template);
+        vehicleCount++;
+
+        // Show remove buttons for all vehicle entries except the first
+        document.querySelectorAll('.remove-vehicle').forEach((button, index) => {
+            button.style.display = index === 0 ? 'none' : 'flex';
+        });
+
+        // Add event listeners for remove buttons
+        document.querySelectorAll('.remove-vehicle').forEach(button => {
+            button.addEventListener('click', () => {
+                button.closest('.vehicle-entry').remove();
+                // Reindex vehicle inputs
+                document.querySelectorAll('.vehicle-entry').forEach((entry, index) => {
+                    entry.querySelector('input[name$="vehicleNo"]').name = `vehicles[${index}].vehicleNo`;
+                    entry.querySelector('select[name$="vehicleType"]').name = `vehicles[${index}].vehicleType`;
+                    entry.querySelector('input[name$="brand"]').name = `vehicles[${index}].brand`;
+                    entry.querySelector('input[name$="model"]').name = `vehicles[${index}].model`;
+                    entry.querySelector('input[name$="color"]').name = `vehicles[${index}].color`;
+                });
+            });
+        });
+    });
+</script>
+</body>
+</html>

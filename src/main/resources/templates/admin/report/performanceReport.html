@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParQHub - Performance Report</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #0a0f1c; }
+        .glass {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .active {
+            background: linear-gradient(90deg, #ffb703, #ff6600);
+            color: #0a0f1c !important;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="text-white flex">
+
+<!-- Sidebar -->
+<aside class="w-72 h-screen glass flex flex-col fixed">
+    <div class="p-6 flex items-center gap-3 border-b border-gray-700">
+        <img src="/images/logo.svg" alt="ParQHub" class="h-10">
+        <span class="text-2xl font-bold">ParQHub</span>
+    </div>
+    <nav class="flex-1 p-4 space-y-2">
+        <a href="/admin/dashboard" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 transition"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="/admin/tables" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 transition"><i class="fas fa-table"></i> Table View</a>
+        <a href="/admin/parking-viewer" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 transition"><i class="fas fa-parking"></i> Parking Viewer</a>
+        <a href="/admin/reports" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 transition"><i class="fas fa-chart-bar"></i> Report View</a>
+    </nav>
+    <div class="p-4 border-t border-gray-700">
+        <a th:href="@{/admin/logout}" class="flex items-center gap-3 p-3 rounded-lg hover:bg-red-500/30 text-red-400"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+</aside>
+
+<!-- Main Content -->
+<main class="ml-72 w-full p-6">
+    <!-- Top bar -->
+    <div class="flex justify-between items-center mb-6">
+        <div class="flex items-center gap-4">
+            <a href="/admin/reports" class="text-yellow-400 hover:text-yellow-300 transition">
+                <i class="fas fa-arrow-left text-xl"></i>
+            </a>
+            <h1 class="text-2xl font-bold">Performance Report</h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <button onclick="exportReportCSV()" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-400 transition font-semibold">
+                <i class="fas fa-download mr-2"></i>Export CSV
+            </button>
+            <button onclick="refreshReport()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-400 transition font-semibold">
+                <i class="fas fa-sync-alt mr-2"></i>Refresh
+            </button>
+            <span class="text-gray-300">Welcome, <span th:text="${adminName}">Admin</span></span>
+        </div>
+    </div>
+
+    <!-- Report Period Selection -->
+    <div class="glass p-6 rounded-lg mb-6">
+        <h2 class="text-xl font-bold mb-4">Report Period</h2>
+        <div class="flex gap-4 items-end">
+            <div>
+                <label for="startDate" class="block text-sm font-medium text-gray-300 mb-2">Start Date</label>
+                <input type="date" id="startDate" class="bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-yellow-400">
+            </div>
+            <div>
+                <label for="endDate" class="block text-sm font-medium text-gray-300 mb-2">End Date</label>
+                <input type="date" id="endDate" class="bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-yellow-400">
+            </div>
+            <button onclick="generateReport()" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-400 transition font-semibold">
+                <i class="fas fa-chart-bar mr-2"></i>Generate Report
+            </button>
+        </div>
+    </div>
+
+    <!-- Performance Summary -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="glass p-6 rounded-lg text-center">
+            <div class="text-3xl font-bold text-green-400 mb-2" id="systemUptime">99.8%</div>
+            <div class="text-sm text-gray-400">System Uptime</div>
+        </div>
+        <div class="glass p-6 rounded-lg text-center">
+            <div class="text-3xl font-bold text-blue-400 mb-2" id="avgResponseTime">120ms</div>
+            <div class="text-sm text-gray-400">Avg Response Time</div>
+        </div>
+        <div class="glass p-6 rounded-lg text-center">
+            <div class="text-3xl font-bold text-purple-400 mb-2" id="totalUsers">0</div>
+            <div class="text-sm text-gray-400">Total Users</div>
+        </div>
+        <div class="glass p-6 rounded-lg text-center">
+            <div class="text-3xl font-bold text-yellow-400 mb-2" id="errorRate">0.0%</div>
+            <div class="text-sm text-gray-400">Error Rate</div>
+        </div>
+    </div>
+
+    <!-- System Performance Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Response Time Chart -->
+        <div class="glass p-6 rounded-lg">
+            <h3 class="text-lg font-bold mb-4">Response Time Trend</h3>
+            <canvas id="responseTimeChart" width="400" height="200"></canvas>
+        </div>
+
+        <!-- User Activity Chart -->
+        <div class="glass p-6 rounded-lg">
+            <h3 class="text-lg font-bold mb-4">User Activity Pattern</h3>
+            <canvas id="userActivityChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+
+    <!-- System Health Overview -->
+    <div class="glass p-6 rounded-lg mb-6">
+        <h3 class="text-lg font-bold mb-4">System Health Overview</h3>
+        <canvas id="systemHealthChart" width="800" height="300"></canvas>
+    </div>
+
+    <!-- Performance Metrics -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="glass p-6 rounded-lg">
+            <h3 class="text-lg font-bold mb-4">API Performance</h3>
+            <canvas id="apiPerformanceChart" width="400" height="200"></canvas>
+        </div>
+
+        <div class="glass p-6 rounded-lg">
+            <h3 class="text-lg font-bold mb-4">Database Performance</h3>
+            <canvas id="dbPerformanceChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+
+    <!-- Error Logs -->
+    <div class="glass p-6 rounded-lg mb-6">
+        <h3 class="text-lg font-bold mb-4">Recent Error Logs</h3>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-gray-600">
+                        <th class="text-left py-3 px-4">Timestamp</th>
+                        <th class="text-left py-3 px-4">Error Type</th>
+                        <th class="text-left py-3 px-4">Severity</th>
+                        <th class="text-left py-3 px-4">Message</th>
+                        <th class="text-left py-3 px-4">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="errorLogsTable">
+                    <!-- Error logs will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Performance Alerts -->
+    <div class="glass p-6 rounded-lg">
+        <h3 class="text-lg font-bold mb-4">Performance Alerts</h3>
+        <div class="space-y-3">
+            <div class="flex items-center justify-between p-3 bg-yellow-500/20 border border-yellow-500/30 rounded-lg">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+                    <div>
+                        <div class="font-semibold">High Response Time</div>
+                        <div class="text-sm text-gray-400">API response time exceeded 500ms threshold</div>
+                    </div>
+                </div>
+                <span class="text-sm text-yellow-400">2 hours ago</span>
+            </div>
+            <div class="flex items-center justify-between p-3 bg-green-500/20 border border-green-500/30 rounded-lg">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-check-circle text-green-400"></i>
+                    <div>
+                        <div class="font-semibold">System Recovery</div>
+                        <div class="text-sm text-gray-400">All systems back to normal operation</div>
+                    </div>
+                </div>
+                <span class="text-sm text-green-400">4 hours ago</span>
+            </div>
+            <div class="flex items-center justify-between p-3 bg-blue-500/20 border border-blue-500/30 rounded-lg">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-info-circle text-blue-400"></i>
+                    <div>
+                        <div class="font-semibold">Peak Usage</div>
+                        <div class="text-sm text-gray-400">System handling peak user load successfully</div>
+                    </div>
+                </div>
+                <span class="text-sm text-blue-400">6 hours ago</span>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+// Initialize charts
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+    loadInitialSummary();
+    loadErrorLogs();
+    setDefaultDates();
+});
+
+function setDefaultDates() {
+    const today = new Date();
+    const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    
+    document.getElementById('startDate').value = lastWeek.toISOString().split('T')[0];
+    document.getElementById('endDate').value = today.toISOString().split('T')[0];
+}
+
+function initializeCharts() {
+    // Response Time Chart
+    const responseTimeCtx = document.getElementById('responseTimeChart').getContext('2d');
+    new Chart(responseTimeCtx, {
+        type: 'line',
+        data: {
+            labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+            datasets: [{
+                label: 'Response Time (ms)',
+                data: [95, 110, 125, 140, 120, 105, 100],
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: { color: '#ffffff' }
+                }
+            },
+            scales: {
+                x: { ticks: { color: '#ffffff' } },
+                y: { ticks: { color: '#ffffff' } }
+            }
+        }
+    });
+
+    // User Activity Chart
+    const userActivityCtx = document.getElementById('userActivityChart').getContext('2d');
+    new Chart(userActivityCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            datasets: [{
+                label: 'Active Users',
+                data: [1200, 1350, 1100, 1450, 1600, 800, 600],
+                backgroundColor: '#10b981'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: { color: '#ffffff' }
+                }
+            },
+            scales: {
+                x: { ticks: { color: '#ffffff' } },
+                y: { ticks: { color: '#ffffff' } }
+            }
+        }
+    });
+
+    // System Health Chart
+    const systemHealthCtx = document.getElementById('systemHealthChart').getContext('2d');
+    new Chart(systemHealthCtx, {
+        type: 'line',
+        data: {
+            labels: ['CPU', 'Memory', 'Disk', 'Network', 'Database'],
+            datasets: [{
+                label: 'Usage %',
+                data: [45, 60, 35, 25, 40],
+                borderColor: '#8b5cf6',
+                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: { color: '#ffffff' }
+                }
+            },
+            scales: {
+                x: { ticks: { color: '#ffffff' } },
+                y: { ticks: { color: '#ffffff' } }
+            }
+        }
+    });
+
+    // API Performance Chart
+    const apiPerformanceCtx = document.getElementById('apiPerformanceChart').getContext('2d');
+    new Chart(apiPerformanceCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Success', 'Client Error', 'Server Error', 'Timeout'],
+            datasets: [{
+                data: [95, 3, 1.5, 0.5],
+                backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#6b7280']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: { color: '#ffffff' }
+                }
+            }
+        }
+    });
+
+    // Database Performance Chart
+    const dbPerformanceCtx = document.getElementById('dbPerformanceChart').getContext('2d');
+    new Chart(dbPerformanceCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Query Time', 'Connection Pool', 'Cache Hit', 'Index Usage'],
+            datasets: [{
+                label: 'Performance Score',
+                data: [85, 92, 88, 95],
+                backgroundColor: '#f59e0b'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: { color: '#ffffff' }
+                }
+            },
+            scales: {
+                x: { ticks: { color: '#ffffff' } },
+                y: { ticks: { color: '#ffffff' } }
+            }
+        }
+    });
+}
+
+function loadErrorLogs() {
+    const errorLogs = [
+        { timestamp: '2024-12-20 14:30:25', type: 'API Error', severity: 'Medium', message: 'Payment gateway timeout', status: 'Resolved' },
+        { timestamp: '2024-12-20 12:15:10', type: 'Database Error', severity: 'Low', message: 'Connection pool exhausted', status: 'Resolved' },
+        { timestamp: '2024-12-20 10:45:33', type: 'System Error', severity: 'High', message: 'Memory usage exceeded threshold', status: 'Investigating' },
+        { timestamp: '2024-12-20 09:20:15', type: 'Network Error', severity: 'Medium', message: 'External API unavailable', status: 'Resolved' },
+        { timestamp: '2024-12-20 08:10:42', type: 'Application Error', severity: 'Low', message: 'Invalid user input validation', status: 'Resolved' }
+    ];
+
+    const tbody = document.getElementById('errorLogsTable');
+    tbody.innerHTML = '';
+
+    errorLogs.forEach(log => {
+        const row = document.createElement('tr');
+        row.className = 'border-b border-gray-700 hover:bg-gray-700/30';
+        
+        const severityColor = log.severity === 'High' ? 'text-red-400' : 
+                             log.severity === 'Medium' ? 'text-yellow-400' : 'text-green-400';
+        
+        const statusColor = log.status === 'Resolved' ? 'text-green-400' : 
+                           log.status === 'Investigating' ? 'text-yellow-400' : 'text-red-400';
+        
+        row.innerHTML = `
+            <td class="py-3 px-4">${log.timestamp}</td>
+            <td class="py-3 px-4">${log.type}</td>
+            <td class="py-3 px-4 ${severityColor}">${log.severity}</td>
+            <td class="py-3 px-4">${log.message}</td>
+            <td class="py-3 px-4 ${statusColor}">${log.status}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function generateReport() {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    
+    if (!startDate || !endDate) {
+        alert('Please select both start and end dates');
+        return;
+    }
+    
+    if (new Date(startDate) > new Date(endDate)) {
+        alert('Start date cannot be after end date');
+        return;
+    }
+    
+    // Show loading state
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating...';
+    button.disabled = true;
+    
+    // Fetch performance report data from backend
+    fetch(`/admin/api/reports/performance?startDate=${startDate}&endDate=${endDate}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            updatePerformanceSummary(data);
+            updateCharts(data);
+            
+            // Show success message
+            showSuccessMessage(`Performance report generated successfully! Report ID: ${data.reportId}`);
+        })
+        .catch(error => {
+            console.error('Error generating report:', error);
+            alert('Failed to generate report: ' + error.message);
+        })
+        .finally(() => {
+            // Reset button state
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+}
+
+function loadInitialSummary() {
+    fetch('/admin/api/reports/performance/initial')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error('Error loading initial summary:', data.error);
+                return;
+            }
+            updatePerformanceSummary(data);
+        })
+        .catch(error => {
+            console.error('Error loading initial summary:', error);
+        });
+}
+
+function updatePerformanceSummary(data) {
+    document.getElementById('systemUptime').textContent = data.systemUptime + '%';
+    document.getElementById('avgResponseTime').textContent = data.avgResponseTime + 'ms';
+    document.getElementById('totalUsers').textContent = data.totalUsers.toLocaleString();
+    document.getElementById('errorRate').textContent = data.errorRate + '%';
+}
+
+function updateCharts(data) {
+    // Update charts with real data if available
+    // For now, keeping the existing static charts
+    console.log('Charts updated with data:', data);
+}
+
+function exportReportCSV() {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    
+    if (!startDate || !endDate) {
+        alert('Please select date range and generate a report first');
+        return;
+    }
+    
+    // Show loading state
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Exporting...';
+    button.disabled = true;
+    
+    // Create download link
+    const link = document.createElement('a');
+    link.href = `/admin/api/reports/performance/export-csv?startDate=${startDate}&endDate=${endDate}`;
+    link.download = `performance-report-${startDate}-to-${endDate}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Reset button state
+    setTimeout(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    }, 1000);
+}
+
+function refreshReport() {
+    // Call generateReport with current date values
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    
+    if (startDate && endDate) {
+        generateReport();
+    } else {
+        // Refresh initial summary
+        loadInitialSummary();
+    }
+}
+
+function showSuccessMessage(message) {
+    // Create a temporary success message
+    const successDiv = document.createElement('div');
+    successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+    successDiv.innerHTML = `<i class="fas fa-check mr-2"></i>${message}`;
+    document.body.appendChild(successDiv);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        if (document.body.contains(successDiv)) {
+            document.body.removeChild(successDiv);
+        }
+    }, 3000);
+}
+</script>
+
+</body>
+</html>

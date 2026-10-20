@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParQHub - My Vehicles</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background: linear-gradient(135deg, #0a0f1c 0%, #1a1f35 50%, #0a0f1c 100%);
+            min-height: 100vh;
+        }
+        
+        .glass {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        
+        .glass-strong {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .active {
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            color: #ffffff !important;
+            font-weight: bold;
+        }
+        
+        .vehicle-card {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .vehicle-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #3b82f6, #10b981);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .vehicle-card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .vehicle-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+            border-color: #3b82f6;
+        }
+        
+        .floating-animation {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .neon-btn {
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            color: #ffffff;
+            font-weight: 600;
+            border-radius: 12px;
+            transition: all 0.3s ease-in-out;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .neon-btn:hover {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.6), 0 0 40px rgba(29, 78, 216, 0.4);
+            transform: translateY(-2px);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+        .modal-content {
+            background-color: #1e293b;
+            margin: 5% auto;
+            padding: 0;
+            border: 1px solid #374151;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+        }
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #374151;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-body {
+            padding: 20px;
+        }
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid #374151;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body class="text-white flex">
+    <!-- Background Animation -->
+    <div class="fixed inset-0 z-0">
+        <div class="absolute top-20 left-20 w-32 h-32 bg-blue-500/10 rounded-full blur-xl floating-animation"></div>
+        <div class="absolute bottom-20 right-20 w-40 h-40 bg-purple-500/10 rounded-full blur-xl floating-animation" style="animation-delay: 1s;"></div>
+        <div class="absolute top-1/2 left-1/4 w-24 h-24 bg-green-500/10 rounded-full blur-xl floating-animation" style="animation-delay: 2s;"></div>
+    </div>
+
+<!-- Sidebar -->
+<aside class="w-72 h-screen glass flex flex-col fixed z-10">
+    <div class="p-6 flex items-center gap-3 border-b border-gray-700">
+        <img src="/images/logo.svg" alt="ParQHub" class="h-10">
+        <span class="text-2xl font-bold">ParQHub</span>
+    </div>
+    <nav class="flex-1 p-4 space-y-2">
+        <!-- User Navigation Links -->
+        <a th:href="@{/user/dashboard}" class="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-400/30 transition">
+            <i class="fas fa-home"></i> Dashboard
+        </a>
+        <a th:href="@{/user/findparking}" class="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-400/30 transition">
+            <i class="fas fa-parking"></i> Find Parking
+        </a>
+        <a th:href="@{/user/bookings}" class="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-400/30 transition">
+            <i class="fas fa-calendar-check"></i> My Bookings
+        </a>
+        <a th:href="@{/user/vehicles}" class="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-400/30 transition active">
+            <i class="fas fa-car"></i> My Vehicles
+        </a>
+        <a th:href="@{/user/payments}" class="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-400/30 transition">
+            <i class="fas fa-credit-card"></i> Payment History
+        </a>
+        <a th:href="@{/user/notifications}" class="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-400/30 transition">
+            <i class="fas fa-bell"></i> Notifications
+        </a>
+        <a th:href="@{/user/settings}" class="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-400/30 transition">
+            <i class="fas fa-cog"></i> Settings
+        </a>
+    </nav>
+    <div class="p-4 border-t border-gray-700">
+        <a th:href="@{/user/logout}" class="flex items-center gap-3 p-3 rounded-lg hover:bg-red-500/30 text-red-400">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </div>
+</aside>
+
+<!-- Main Content -->
+<main class="ml-72 w-full p-6 relative z-10">
+    <!-- Header Section -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">My Vehicles</h1>
+            <p class="text-gray-400 mt-2">Manage your registered vehicles</p>
+        </div>
+        <div class="flex items-center gap-4">
+            <button id="addVehicleBtn" class="px-6 py-3 neon-btn">
+                <i class="fas fa-plus mr-2"></i> Add Vehicle
+            </button>
+            <span class="text-gray-300">Welcome, <span th:text="${userName}">User</span></span>
+            <img src="/images/user-avatar.png" alt="User" class="h-12 w-12 rounded-full border-2 border-blue-400">
+        </div>
+    </div>
+
+    <!-- Vehicle Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="stats-card">
+            <i class="fas fa-car text-blue-400 text-2xl mb-2"></i>
+            <h3 class="font-semibold text-gray-300">Total Vehicles</h3>
+            <p class="text-2xl font-bold text-blue-400" th:text="${totalVehicles}">0</p>
+        </div>
+        <div class="stats-card">
+            <i class="fas fa-check-circle text-green-400 text-2xl mb-2"></i>
+            <h3 class="font-semibold text-gray-300">Active Vehicles</h3>
+            <p class="text-2xl font-bold text-green-400" th:text="${totalVehicles}">0</p>
+        </div>
+        <div class="stats-card">
+            <i class="fas fa-clock text-yellow-400 text-2xl mb-2"></i>
+            <h3 class="font-semibold text-gray-300">Recent Usage</h3>
+            <p class="text-2xl font-bold text-yellow-400">Today</p>
+        </div>
+        <div class="stats-card">
+            <i class="fas fa-shield-alt text-purple-400 text-2xl mb-2"></i>
+            <h3 class="font-semibold text-gray-300">Status</h3>
+            <p class="text-2xl font-bold text-purple-400">All Good</p>
+        </div>
+    </div>
+
+    <!-- Vehicle List -->
+    <div class="glass p-6 rounded-2xl">
+        <h2 class="text-xl font-bold mb-6 text-blue-400">Registered Vehicles</h2>
+        
+        <div th:if="${#lists.isEmpty(vehicles)}" class="text-center py-8">
+            <i class="fas fa-car text-gray-500 text-6xl mb-4"></i>
+            <p class="text-gray-400 text-lg">No vehicles registered yet</p>
+            <p class="text-gray-500">Click "Add Vehicle" to register your first vehicle</p>
+        </div>
+        
+        <div th:if="${!#lists.isEmpty(vehicles)}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Vehicle Card -->
+            <div th:each="vehicle : ${vehicles}" 
+                 th:data-vehicle-id="${vehicle.id}"
+                 class="vehicle-card glass p-6 rounded-2xl border border-gray-600">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-car text-blue-400 text-2xl"></i>
+                        <div>
+                            <h3 class="font-semibold text-lg" th:text="${vehicle.brand + ' ' + vehicle.model}">Vehicle</h3>
+                            <p class="text-gray-400 text-sm" th:text="${vehicle.vehicleNo}">License</p>
+                        </div>
+                    </div>
+                    <span class="bg-green-500/20 text-green-400 px-2 py-1 rounded-full text-xs">Active</span>
+                </div>
+                
+                <div class="space-y-2 mb-4">
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Model:</span>
+                        <span th:text="${vehicle.model}">Model</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Color:</span>
+                        <span th:text="${vehicle.color}">Color</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Type:</span>
+                        <span th:text="${vehicle.vehicleType}">Type</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Last Used:</span>
+                        <span>Today</span>
+                    </div>
+                </div>
+                
+                <div class="flex gap-2">
+                    <button class="edit-vehicle flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded text-sm transition">
+                        <i class="fas fa-edit mr-1"></i> Edit
+                    </button>
+                    <button class="remove-vehicle flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded text-sm transition">
+                        <i class="fas fa-trash mr-1"></i> Remove
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Vehicle Activity -->
+    <div class="glass p-6 rounded-2xl mt-6">
+        <h2 class="text-xl font-bold mb-4 text-green-400">Recent Vehicle Activity</h2>
+        <div th:if="${#lists.isEmpty(vehicleActivity)}" class="text-center py-8">
+            <i class="fas fa-history text-gray-500 text-4xl mb-4"></i>
+            <p class="text-gray-400">No recent activity</p>
+        </div>
+        <div th:if="${!#lists.isEmpty(vehicleActivity)}" class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-gray-700">
+                        <th class="text-left py-3 px-4">Vehicle</th>
+                        <th class="text-left py-3 px-4">Location</th>
+                        <th class="text-left py-3 px-4">Duration</th>
+                        <th class="text-left py-3 px-4">Amount</th>
+                        <th class="text-left py-3 px-4">Date</th>
+                        <th class="text-left py-3 px-4">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="booking : ${vehicleActivity}" class="border-b border-gray-700/30">
+                        <td class="py-3 px-4" th:text="${booking.vehicle.brand + ' ' + booking.vehicle.model + ' (' + booking.vehicle.vehicleNo + ')'}">Vehicle</td>
+                        <td class="py-3 px-4" th:text="${booking.parkingSlot.parkingLot.location}">Location</td>
+                        <td class="py-3 px-4" th:text="${#temporals.format(booking.startTime, 'HH:mm') + ' - ' + #temporals.format(booking.endTime, 'HH:mm')}">Duration</td>
+                        <td class="py-3 px-4">LKR 400</td>
+                        <td class="py-3 px-4" th:text="${#temporals.format(booking.startTime, 'dd/MM/yyyy, HH:mm')}">Date</td>
+                        <td class="py-3 px-4">
+                            <span th:if="${booking.paymentStatus.name() == 'Completed'}" 
+                                  class="bg-green-500/20 text-green-400 px-2 py-1 rounded-full text-xs">Completed</span>
+                            <span th:if="${booking.paymentStatus.name() == 'Pending'}" 
+                                  class="bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded-full text-xs">Pending</span>
+                            <span th:if="${booking.paymentStatus.name() == 'Failed'}" 
+                                  class="bg-red-500/20 text-red-400 px-2 py-1 rounded-full text-xs">Failed</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<!-- Add/Edit Vehicle Modal -->
+<div id="vehicleModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle" class="text-xl font-bold">Add New Vehicle</h3>
+            <span class="close text-gray-400 hover:text-white cursor-pointer text-2xl">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="vehicleForm" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Vehicle Brand</label>
+                        <input type="text" id="brand" name="brand" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Vehicle Model</label>
+                        <input type="text" id="model" name="model" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white" required>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">License Plate</label>
+                        <input type="text" id="vehicleNo" name="vehicleNo" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Color</label>
+                        <input type="text" id="color" name="color" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white" required>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Vehicle Type</label>
+                        <select id="vehicleType" name="vehicleType" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white" required>
+                            <option value="">Select Type</option>
+                            <option value="Car">Car</option>
+                            <option value="Bike">Bike</option>
+                            <option value="Van">Van</option>
+                            <option value="Truck">Truck</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition close">Cancel</button>
+            <button type="button" id="saveVehicle" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">Save Vehicle</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Notification function
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg text-white font-medium transition-all duration-300 transform translate-x-full`;
+        
+        // Set background color based on type
+        if (type === 'success') {
+            notification.className += ' bg-green-600';
+        } else if (type === 'error') {
+            notification.className += ' bg-red-600';
+        } else {
+            notification.className += ' bg-blue-600';
+        }
+        
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => {
+            notification.classList.remove('translate-x-full');
+        }, 100);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
+    }
+
+    // Validation functions
+    function clearValidationErrors() {
+        const errorElements = document.querySelectorAll('.validation-error');
+        errorElements.forEach(el => el.remove());
+        
+        const inputs = document.querySelectorAll('#vehicleForm input, #vehicleForm select');
+        inputs.forEach(input => {
+            input.classList.remove('border-red-500');
+            input.classList.add('border-gray-600');
+        });
+    }
+
+    function showValidationError(input, message) {
+        // Remove existing error for this input
+        const existingError = input.parentNode.querySelector('.validation-error');
+        if (existingError) {
+            existingError.remove();
+        }
+        
+        // Add red border
+        input.classList.remove('border-gray-600');
+        input.classList.add('border-red-500');
+        
+        // Add error message
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'validation-error text-red-400 text-sm mt-1';
+        errorDiv.textContent = message;
+        input.parentNode.appendChild(errorDiv);
+    }
+
+    function validateForm() {
+        clearValidationErrors();
+        let isValid = true;
+        
+        const brand = document.getElementById('brand');
+        const model = document.getElementById('model');
+        const vehicleNo = document.getElementById('vehicleNo');
+        const color = document.getElementById('color');
+        const vehicleType = document.getElementById('vehicleType');
+        
+        if (!brand.value.trim()) {
+            showValidationError(brand, 'Brand is required');
+            isValid = false;
+        }
+        
+        if (!model.value.trim()) {
+            showValidationError(model, 'Model is required');
+            isValid = false;
+        }
+        
+        if (!vehicleNo.value.trim()) {
+            showValidationError(vehicleNo, 'License plate is required');
+            isValid = false;
+        } else if (vehicleNo.value.trim().length < 3) {
+            showValidationError(vehicleNo, 'License plate must be at least 3 characters');
+            isValid = false;
+        }
+        
+        if (!color.value.trim()) {
+            showValidationError(color, 'Color is required');
+            isValid = false;
+        }
+        
+        if (!vehicleType.value) {
+            showValidationError(vehicleType, 'Vehicle type is required');
+            isValid = false;
+        }
+        
+        return isValid;
+    }
+
+    // Modal functionality
+    const modal = document.getElementById('vehicleModal');
+    const addVehicleBtn = document.getElementById('addVehicleBtn');
+    const closeBtns = document.querySelectorAll('.close');
+    const saveVehicleBtn = document.getElementById('saveVehicle');
+    const modalTitle = document.getElementById('modalTitle');
+    const vehicleForm = document.getElementById('vehicleForm');
+
+    // Open modal
+    addVehicleBtn.addEventListener('click', () => {
+        modal.style.display = 'block';
+        modalTitle.textContent = 'Add New Vehicle';
+        vehicleForm.reset();
+        // Clear any previous validation errors
+        clearValidationErrors();
+    });
+
+    // Close modal
+    closeBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+    });
+
+    // Close modal when clicking outside
+    window.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+
+    // Save vehicle
+    saveVehicleBtn.addEventListener('click', async () => {
+        // Validate form first
+        if (!validateForm()) {
+            showNotification('Please fix the validation errors', 'error');
+            return;
+        }
+        
+        const formData = new FormData(vehicleForm);
+        const vehicleData = Object.fromEntries(formData.entries());
+        
+        try {
+            const response = await fetch('/user/vehicles/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams(vehicleData)
+            });
+            
+            const result = await response.text();
+            
+            if (result.startsWith('success:')) {
+                // Show success message
+                const successMessage = result.replace('success:', '');
+                showNotification(successMessage, 'success');
+                modal.style.display = 'none';
+                vehicleForm.reset();
+                // Reload page to show new vehicle
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                // Show error message
+                const errorMessage = result.replace('error:', '');
+                showNotification(errorMessage, 'error');
+            }
+        } catch (error) {
+            showNotification('Error adding vehicle: ' + error.message, 'error');
+        }
+    });
+
+    // Edit vehicle functionality (placeholder)
+    document.querySelectorAll('.edit-vehicle').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const card = this.closest('.vehicle-card');
+            const vehicleId = card.dataset.vehicleId;
+            const brand = card.querySelector('h3').textContent;
+            const licensePlate = card.querySelector('.text-gray-400').textContent;
+            
+            alert(`Edit functionality for ${brand} (${licensePlate}) would be implemented here.`);
+        });
+    });
+
+    // Remove vehicle functionality (placeholder)
+    document.querySelectorAll('.remove-vehicle').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const card = this.closest('.vehicle-card');
+            const vehicleId = card.dataset.vehicleId;
+            const brand = card.querySelector('h3').textContent;
+            const licensePlate = card.querySelector('.text-gray-400').textContent;
+            
+            if (confirm(`Are you sure you want to remove ${brand} (${licensePlate})?`)) {
+                alert(`Remove functionality for ${brand} (${licensePlate}) would be implemented here.`);
+            }
+        });
+    });
+</script>
+</body>
+</html>

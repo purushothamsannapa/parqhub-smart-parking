@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ParQHub - Smart Automated Vehicle Parking System for Colombo, Kandy & Galle. Reserve, manage, and pay for parking anytime, anywhere.">
+    <meta name="keywords" content="parking, smart parking, vehicle parking, automated parking, ParQHub, Colombo, Kandy, Galle, Sri Lanka">
+    <title>ParQHub - Smart Parking Solutions for Rural Areas</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- AOS Animation -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- Particle.js -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --dark-bg: #0f0f23;
+            --darker-bg: #050014;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--darker-bg);
+            overflow-x: hidden;
+        }
+        
+        .gradient-text {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        
+        .hero-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 300% 300%;
+            animation: gradientShift 8s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .floating-animation {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+            font-weight: 600;
+            padding: 12px 32px;
+            border-radius: 50px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: white;
+            font-weight: 600;
+            padding: 12px 32px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .feature-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.4s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+        
+        .location-badge {
+            background: var(--accent-gradient);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-block;
+            margin: 4px;
+        }
+        
+        .stats-counter {
+            font-size: 3rem;
+            font-weight: 800;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body class="text-white overflow-x-hidden">
+
+<!-- Particles Background -->
+<div id="particles-js"></div>
+
+<!-- Enhanced Navbar -->
+<nav class="fixed w-full z-50 glass-effect px-6 lg:px-8 py-4 transition-all duration-300">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <img src="/images/logo.svg" alt="ParQHub Logo" class="h-12 w-12 floating-animation">
+            <div>
+                <span class="text-2xl font-bold gradient-text">ParQHub</span>
+                <p class="text-xs text-gray-400 -mt-1">Smart Parking Solutions</p>
+            </div>
+        </div>
+        <div class="hidden md:flex items-center gap-6">
+            <a href="#features" class="text-gray-300 hover:text-white transition-colors">Features</a>
+            <a href="#locations" class="text-gray-300 hover:text-white transition-colors">Locations</a>
+            <a href="#about" class="text-gray-300 hover:text-white transition-colors">About</a>
+        </div>
+        <div class="flex gap-3">
+            <a th:href="@{/user/login}" class="btn-secondary px-4 py-2 text-sm">Login</a>
+            <a th:href="@{/register}" class="btn-primary px-4 py-2 text-sm">Get Started</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="min-h-screen flex flex-col justify-center items-center text-center px-4 relative overflow-hidden">
+    <div class="absolute inset-0 hero-gradient opacity-20"></div>
+    
+    <!-- Floating Elements -->
+    <div class="absolute top-20 left-10 w-20 h-20 bg-blue-500/20 rounded-full blur-xl animate-pulse"></div>
+    <div class="absolute bottom-20 right-10 w-32 h-32 bg-purple-500/20 rounded-full blur-xl animate-pulse" style="animation-delay: 2s;"></div>
+    <div class="absolute top-1/2 left-1/4 w-16 h-16 bg-pink-500/20 rounded-full blur-xl animate-pulse" style="animation-delay: 4s;"></div>
+    
+    <div class="relative z-10 max-w-6xl mx-auto">
+        <!-- Location Badges -->
+        <div class="mb-8" data-aos="fade-down">
+            <p class="text-gray-400 mb-4">Now Available In</p>
+            <div class="flex flex-wrap justify-center gap-2">
+                <span class="location-badge">Colombo</span>
+                <span class="location-badge">Kandy</span>
+                <span class="location-badge">Galle</span>
+            </div>
+        </div>
+        
+        <h1 data-aos="fade-up" class="text-4xl md:text-7xl font-extrabold mb-6 leading-tight">
+            <span class="gradient-text">Smart Parking</span><br>
+            <span class="text-white">for Rural Areas</span>
+        </h1>
+        
+        <p data-aos="fade-up" data-aos-delay="200" class="text-xl text-gray-300 max-w-3xl mx-auto mb-8 leading-relaxed">
+            Experience the future of parking with <span class="gradient-text font-semibold">ParQHub</span>. 
+            Reserve, manage, and pay for parking spaces seamlessly across Sri Lanka's key cities.
+        </p>
+        
+        <!-- Stats -->
+        <div class="grid grid-cols-3 gap-8 mb-12 max-w-2xl mx-auto" data-aos="fade-up" data-aos-delay="300">
+            <div class="text-center">
+                <div class="stats-counter">50+</div>
+                <p class="text-gray-400 text-sm">Parking Locations</p>
+            </div>
+            <div class="text-center">
+                <div class="stats-counter">1000+</div>
+                <p class="text-gray-400 text-sm">Happy Users</p>
+            </div>
+            <div class="text-center">
+                <div class="stats-counter">24/7</div>
+                <p class="text-gray-400 text-sm">Support</p>
+            </div>
+        </div>
+        
+        <div class="flex flex-col sm:flex-row gap-6 justify-center" data-aos="fade-up" data-aos-delay="400">
+            <a th:href="@{/user-login}" class="btn-primary text-center">Start Parking Smart</a>
+            <a th:href="@{#features}" class="btn-secondary text-center">Explore Features</a>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-20 px-6 md:px-20 bg-gradient-to-b from-[#0a0f1c] to-[#131b2e]">
+    <h2 class="text-3xl md:text-4xl font-bold text-center mb-16 glow-text" data-aos="fade-up">
+        Why Choose ParQHub?
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+        <div class="glass p-8 text-center rounded-2xl hover:-translate-y-2 hover:shadow-xl transition" data-aos="zoom-in" data-aos-delay="100">
+            <img src="/images/fast-booking.svg" alt="Fast Booking" class="mx-auto h-16 mb-4">
+            <h3 class="text-xl font-semibold mb-3">Fast Booking</h3>
+            <p class="text-gray-300">Secure your parking space in seconds with our streamlined booking process.</p>
+        </div>
+        <div class="glass p-8 text-center rounded-2xl hover:-translate-y-2 hover:shadow-xl transition" data-aos="zoom-in" data-aos-delay="200">
+            <img src="/images/realtime.svg" alt="Real-Time Data" class="mx-auto h-16 mb-4">
+            <h3 class="text-xl font-semibold mb-3">Real-Time Availability</h3>
+            <p class="text-gray-300">See live updates of available parking spaces across all connected locations.</p>
+        </div>
+        <div class="glass p-8 text-center rounded-2xl hover:-translate-y-2 hover:shadow-xl transition" data-aos="zoom-in" data-aos-delay="300">
+            <img src="/images/security.svg" alt="Security" class="mx-auto h-16 mb-4">
+            <h3 class="text-xl font-semibold mb-3">Secure & Reliable</h3>
+            <p class="text-gray-300">Advanced encryption and secure payment methods keep your data safe.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials -->
+<section class="py-20 px-6 md:px-20 bg-[#0a0f1c]">
+    <h2 class="text-3xl md:text-4xl font-bold text-center mb-16 glow-text" data-aos="fade-up">
+        What Our Users Say
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+        <div class="glass p-6 rounded-xl text-center" data-aos="fade-up" data-aos-delay="100">
+            <p class="text-gray-300 italic">"ParQHub makes finding parking so easy! I never worry about being late anymore."</p>
+            <h4 class="mt-4 font-semibold text-yellow-400">— Sarah J.</h4>
+        </div>
+        <div class="glass p-6 rounded-xl text-center" data-aos="fade-up" data-aos-delay="200">
+            <p class="text-gray-300 italic">"The real-time availability feature is a game changer. Highly recommended!"</p>
+            <h4 class="mt-4 font-semibold text-yellow-400">— Mark R.</h4>
+        </div>
+        <div class="glass p-6 rounded-xl text-center" data-aos="fade-up" data-aos-delay="300">
+            <p class="text-gray-300 italic">"Secure payments and reliable service. Exactly what I needed for my daily commute."</p>
+            <h4 class="mt-4 font-semibold text-yellow-400">— Emily K.</h4>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action -->
+<section class="py-20 bg-gradient-to-r from-yellow-500 to-orange-600 text-center text-black">
+    <h2 class="text-3xl md:text-4xl font-bold mb-6">Ready to Simplify Parking?</h2>
+    <p class="mb-8 text-lg">Join thousands of users enjoying smart parking with ParQHub today.</p>
+    <a th:href="@{/register}" class="px-8 py-3 bg-black text-yellow-400 font-bold rounded-full hover:bg-gray-800 transition">Get Started</a>
+</section>
+
+<!-- Footer -->
+<footer class="bg-[#0a0f1c] py-8 glass text-center text-gray-400 text-sm">
+    <div class="flex flex-col md:flex-row justify-between items-center max-w-6xl mx-auto px-6 gap-4">
+        <p>&copy; <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}"></span> ParQHub. All Rights Reserved.</p>
+        <div class="flex gap-6 text-lg">
+            <a href="#" class="hover:text-yellow-400"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" class="hover:text-yellow-400"><i class="fab fa-twitter"></i></a>
+            <a href="#" class="hover:text-yellow-400"><i class="fab fa-linkedin-in"></i></a>
+        </div>
+    </div>
+</footer>
+
+<!-- FontAwesome for Icons -->
+<script src="https://kit.fontawesome.com/4ad8d5ae3f.js" crossorigin="anonymous"></script>
+<!-- AOS Animation Script -->
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<!-- FontAwesome for Icons -->
+<script src="https://kit.fontawesome.com/4ad8d5ae3f.js" crossorigin="anonymous"></script>
+<!-- AOS Animation Script -->
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+    // Initialize AOS
+    AOS.init({
+        duration: 1000,
+        once: true,
+        offset: 100
+    });
+    
+    // Particles.js configuration
+    particlesJS('particles-js', {
+        particles: {
+            number: {
+                value: 80,
+                density: {
+                    enable: true,
+                    value_area: 800
+                }
+            },
+            color: {
+                value: '#667eea'
+            },
+            shape: {
+                type: 'circle'
+            },
+            opacity: {
+                value: 0.5,
+                random: false
+            },
+            size: {
+                value: 3,
+                random: true
+            },
+            line_linked: {
+                enable: true,
+                distance: 150,
+                color: '#667eea',
+                opacity: 0.4,
+                width: 1
+            },
+            move: {
+                enable: true,
+                speed: 6,
+                direction: 'none',
+                random: false,
+                straight: false,
+                out_mode: 'out',
+                bounce: false
+            }
+        },
+        interactivity: {
+            detect_on: 'canvas',
+            events: {
+                onhover: {
+                    enable: true,
+                    mode: 'repulse'
+                },
+                onclick: {
+                    enable: true,
+                    mode: 'push'
+                },
+                resize: true
+            }
+        },
+        retina_detect: true
+    });
+    
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+    
+    // Navbar scroll effect
+    window.addEventListener('scroll', function() {
+        const navbar = document.querySelector('nav');
+        if (window.scrollY > 100) {
+            navbar.style.background = 'rgba(15, 15, 35, 0.95)';
+        } else {
+            navbar.style.background = 'rgba(255, 255, 255, 0.05)';
+        }
+    });
+</script>
+</body>
+</html>

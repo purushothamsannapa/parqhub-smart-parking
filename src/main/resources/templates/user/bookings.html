@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParQHub - My Bookings</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0a0f1c 0%, #1a1f35 50%, #0a0f1c 100%);
+            min-height: 100vh;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .glass-strong {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .active {
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            color: #ffffff !important;
+            font-weight: bold;
+        }
+
+        .booking-card {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .booking-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #3b82f6, #10b981);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .booking-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .booking-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .status-pending {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: #f59e0b;
+            color: #f59e0b;
+        }
+        .status-completed {
+            background: rgba(34, 197, 94, 0.1);
+            border-color: #22c55e;
+            color: #22c55e;
+        }
+        .status-failed {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+
+        .neon-btn {
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            color: #ffffff;
+            font-weight: 600;
+            border-radius: 12px;
+            transition: all 0.3s ease-in-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .neon-btn:hover {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.6), 0 0 40px rgba(29, 78, 216, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn-orange {
+            background: linear-gradient(90deg, #f97316, #ea580c);
+            color: #ffffff;
+            font-weight: 600;
+            border-radius: 12px;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .btn-orange:hover {
+            box-shadow: 0 0 15px #f97316, 0 0 30px #ea580c;
+            transform: translateY(-2px);
+        }
+
+        .btn-green {
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+            color: #ffffff;
+            font-weight: 600;
+            border-radius: 12px;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .btn-green:hover {
+            box-shadow: 0 0 15px #22c55e, 0 0 30px #16a34a;
+            transform: translateY(-2px);
+        }
+
+        .btn-gray {
+            background: linear-gradient(90deg, #6b7280, #4b5563);
+            color: #ffffff;
+            font-weight: 600;
+            border-radius: 12px;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .btn-gray:hover {
+            box-shadow: 0 0 15px #6b7280, 0 0 30px #4b5563;
+            transform: translateY(-2px);
+        }
+
+        .stats-card {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .stats-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+            border-color: #3b82f6;
+        }
+
+        .floating-animation {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: #1c2436;
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: #fff;
+        }
+        .modal-close:hover {
+            color: #3b82f6;
+        }
+        .form-input, .form-select {
+            background: #1c2436;
+            border: 1px solid #374151;
+            transition: border 0.3s, box-shadow 0.3s;
+        }
+        .form-input:focus, .form-select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+            outline: none;
+        }
+    </style>
+</head>
+<body class="text-white flex">
+<!-- Background Animation -->
+<div class="fixed inset-0 z-0">
+    <div class="absolute top-20 left-20 w-32 h-32 bg-blue-500/10 rounded-full blur-xl floating-animation"></div>
+    <div class="absolute bottom-20 right-20 w-40 h-40 bg-purple-500/10 rounded-full blur-xl floating-animation" style="animation-delay: 1s;"></div>
+    <div class="absolute top-1/2 left-1/4 w-24 h-24 bg-green-500/10 rounded-full blur-xl floating-animation" style="animation-delay: 2s;"></div>
+</div>
+
+<!-- Sidebar -->
+<aside class="w-72 h-screen glass flex flex-col fixed z-10">
+    <div class="p-6 flex items-center gap-3 border-b border-gray-700">
+        <img src="/images/logo.svg" alt="ParQHub" class="h-10">
+        <span class="text-2xl font-bold">ParQHub</span>
+    </div>
+    <nav class="flex-1 p-4 space-y-2">
+        <a th:href="@{/user/dashboard}" class="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-400/30 transition">
+            <i class="fas fa-home"></i> Dashboard
+        </a>
+        <a th:href="@{/user/findparking}" class="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-400/30 transition">
+            <i class="fas fa-parking"></i> Find Parking
+        </a>
+        <a th:href="@{/user/bookings}" class="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-400/30 transition active">
+            <i class="fas fa-calendar-check"></i> My Bookings
+        </a>
+        <a th:href="@{/user/vehicles}" class="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-400/30 transition">
+            <i class="fas fa-car"></i> My Vehicles
+        </a>
+        <a th:href="@{/user/payments}" class="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-400/30 transition">
+            <i class="fas fa-credit-card"></i> Payment History
+        </a>
+        <a th:href="@{/user/notifications}" class="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-400/30 transition">
+            <i class="fas fa-bell"></i> Notifications
+        </a>
+        <a th:href="@{/user/settings}" class="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-400/30 transition">
+            <i class="fas fa-cog"></i> Settings
+        </a>
+    </nav>
+    <div class="p-4 border-t border-gray-700">
+        <a th:href="@{/user/logout}" class="flex items-center gap-3 p-3 rounded-lg hover:bg-red-500/30 text-red-400">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </div>
+</aside>
+
+<!-- Main Content -->
+<main class="ml-72 w-full p-6 relative z-10">
+    <!-- Header Section -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">My Bookings</h1>
+            <p class="text-gray-400 mt-2">Manage your parking reservations and history</p>
+        </div>
+        <div class="flex items-center gap-4">
+            <span class="text-gray-300">Welcome, <span id="user-name" th:text="${userName}">User</span></span>
+            <input type="hidden" id="user-id" th:value="${userId}">
+            <img src="/images/user-avatar.png" alt="User" class="h-12 w-12 rounded-full border-2 border-blue-400">
+        </div>
+    </div>
+
+    <!-- Booking Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="stats-card">
+            <i class="fas fa-calendar text-blue-400 text-2xl mb-2"></i>
+            <h3 class="font-semibold text-gray-300">Total Bookings</h3>
+            <p class="text-2xl font-bold text-blue-400" th:text="${#lists.size(bookings)}">0</p>
+        </div>
+        <div class="stats-card">
+            <i class="fas fa-clock text-yellow-400 text-2xl mb-2"></i>
+            <h3 class="font-semibold text-gray-300">Pending</h3>
+            <p class="text-2xl font-bold text-yellow-400" th:text="${#lists.size(bookings.?[paymentStatus.name() == 'Pending'])}">0</p>
+        </div>
+        <div class="stats-card">
+            <i class="fas fa-check-circle text-green-400 text-2xl mb-2"></i>
+            <h3 class="font-semibold text-gray-300">Completed</h3>
+            <p class="text-2xl font-bold text-green-400" th:text="${#lists.size(bookings.?[paymentStatus.name() == 'Completed'])}">0</p>
+        </div>
+        <div class="stats-card">
+            <i class="fas fa-times-circle text-red-400 text-2xl mb-2"></i>
+            <h3 class="font-semibold text-gray-300">Failed</h3>
+            <p class="text-2xl font-bold text-red-400" th:text="${#lists.size(bookings.?[paymentStatus.name() == 'Failed'])}">0</p>
+        </div>
+    </div>
+
+    <!-- Filter and Search -->
+    <div class="glass p-6 rounded-2xl mb-6">
+        <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div class="flex gap-4">
+                <select id="statusFilter" class="form-select px-4 py-2 rounded-lg focus:outline-none">
+                    <option value="">All Status</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Failed">Failed</option>
+                </select>
+                <select id="vehicleFilter" class="form-select px-4 py-2 rounded-lg focus:outline-none">
+                    <option value="">All Vehicles</option>
+                    <option th:each="vehicle : ${bookings.![vehicle]}" th:value="${vehicle.id}"
+                            th:text="${vehicle.brand + ' ' + vehicle.model + ' (' + vehicle.vehicleNo + ')'}">Vehicle</option>
+                </select>
+            </div>
+            <div class="flex gap-2">
+                <input type="text" id="searchInput" placeholder="Search bookings..."
+                       class="form-input px-4 py-2 rounded-lg focus:outline-none">
+                <button id="searchBtn" class="px-4 py-2 neon-btn">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bookings List -->
+    <div class="glass p-6 rounded-2xl">
+        <h2 class="text-xl font-bold mb-6 text-blue-400">Recent Bookings</h2>
+
+        <div th:if="${#lists.isEmpty(bookings)}" class="text-center py-8">
+            <i class="fas fa-calendar-times text-gray-500 text-6xl mb-4"></i>
+            <p class="text-gray-400 text-lg">No bookings found</p>
+            <p class="text-gray-500">Start by finding and booking a parking spot</p>
+            <a th:href="@{/user/findparking}" class="inline-block mt-4 px-6 py-3 neon-btn">
+                <i class="fas fa-parking mr-2"></i> Find Parking
+            </a>
+        </div>
+
+        <div th:if="${!#lists.isEmpty(bookings)}" class="space-y-4">
+            <!-- Booking Card -->
+            <div th:each="booking : ${bookings}"
+                 th:data-booking-id="${booking.id}"
+                 th:data-status="${booking.paymentStatus.name()}"
+                 th:data-vehicle="${booking.vehicle.brand + ' ' + booking.vehicle.model + ' (' + booking.vehicle.vehicleNo + ')'}"
+                 th:data-vehicle-id="${booking.vehicle.id}"
+                 th:data-user-id="${userId}"
+                 th:data-location="${booking.parkingSlot.parkingLot.location + ', ' + booking.parkingSlot.parkingLot.city}"
+                 th:data-slot-id="${booking.parkingSlot.id}"
+                 th:data-start-time="${#temporals.format(booking.startTime, 'dd/MM/yyyy HH:mm')}"
+                 th:data-duration="${booking.formattedDuration}"
+                 class="booking-card glass p-6 rounded-2xl border border-gray-600">
+
+                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-4 mb-3">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-car text-blue-400"></i>
+                                <span class="font-semibold"
+                                      th:text="${booking.vehicle.brand + ' ' + booking.vehicle.model + ' (' + booking.vehicle.vehicleNo + ')'}">Vehicle</span>
+                            </div>
+                            <span th:if="${booking.paymentStatus.name() == 'Pending'}"
+                                  class="status-pending px-3 py-1 rounded-full text-xs font-medium">Pending</span>
+                            <span th:if="${booking.paymentStatus.name() == 'Completed'}"
+                                  class="status-completed px-3 py-1 rounded-full text-xs font-medium">Completed</span>
+                            <span th:if="${booking.paymentStatus.name() == 'Failed'}"
+                                  class="status-failed px-3 py-1 rounded-full text-xs font-medium">Failed</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-400">Booking ID:</span>
+                                <span th:text="${booking.id}">ID</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400">Location:</span>
+                                <span th:text="${#strings.abbreviate(booking.parkingSlot.parkingLot.location + ', ' + booking.parkingSlot.parkingLot.city, 30)}">
+                                        Location
+                                    </span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400">Slot ID:</span>
+                                <span th:text="${booking.parkingSlot.id}">Slot</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400">Start Time:</span>
+                                <span th:text="${#temporals.format(booking.startTime, 'dd/MM/yyyy HH:mm')}">Start</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400">In Time:</span>
+                                <span class="entry-time text-yellow-400" th:data-booking-id="${booking.id}">
+                                        <span th:if="${booking.paymentStatus.name() == 'Completed'}">Completed Session</span>
+                                        <span th:unless="${booking.paymentStatus.name() == 'Completed'}">Not Entered</span>
+                                    </span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400">End Time:</span>
+                                <span class="exit-time text-yellow-400" th:data-booking-id="${booking.id}">
+                                        <span th:if="${booking.paymentStatus.name() == 'Completed'}">Completed Session</span>
+                                        <span th:unless="${booking.paymentStatus.name() == 'Completed'}">Pending</span>
+                                    </span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400">Duration:</span>
+                                <span th:if="${booking.endTime != null}"
+                                      th:text="${booking.formattedDuration}">Duration</span>
+                                <span th:if="${booking.endTime == null}" class="text-yellow-400">Ongoing</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2 button-group">
+                        <button th:if="${booking.paymentStatus.name() == 'Pending'}"
+                                class="px-4 py-2 neon-btn log-in-btn"
+                                th:data-booking-id="${booking.id}"
+                                th:data-vehicle-id="${booking.vehicle.id}">
+                            <i class="fas fa-sign-in-alt mr-1"></i> In
+                        </button>
+                        <button th:if="${booking.paymentStatus.name() == 'Pending'}"
+                                class="px-4 py-2 btn-orange log-out-btn"
+                                th:data-booking-id="${booking.id}"
+                                th:data-vehicle-id="${booking.vehicle.id}">
+                            <i class="fas fa-sign-out-alt mr-1"></i> Out
+                        </button>
+                        <button th:if="${booking.paymentStatus.name() == 'Pending'}"
+                                class="px-4 py-2 btn-green pay-now-btn"
+                                th:data-booking-id="${booking.id}">
+                            <i class="fas fa-credit-card mr-1"></i> Pay Now
+                        </button>
+                        <button th:if="${booking.paymentStatus.name() == 'Completed'}"
+                                class="px-4 py-2 neon-btn view-receipt-btn"
+                                th:data-booking-id="${booking.id}">
+                            <i class="fas fa-receipt mr-1"></i> View Receipt
+                        </button>
+                        <button class="px-4 py-2 btn-gray view-details-btn"
+                                th:data-booking-id="${booking.id}">
+                            <i class="fas fa-info-circle mr-1"></i> Details
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Messages and Details -->
+    <div id="modal" class="modal">
+        <div class="modal-content relative text-white">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <div id="modal-content-inner"></div>
+        </div>
+    </div>
+</main>
+
+<script>
+    // Modal Functions
+    function showModal(content, type = 'info') {
+        const modal = document.getElementById('modal');
+        const modalContent = document.getElementById('modal-content-inner');
+        let bgColor = 'bg-blue-500';
+        if (type === 'error') bgColor = 'bg-red-500';
+        if (type === 'success') bgColor = 'bg-green-500';
+        if (type === 'warning') bgColor = 'bg-yellow-500';
+
+        modalContent.innerHTML = `
+                <div class="${bgColor} text-white p-4 rounded-t-lg">
+                    <h3 class="text-lg font-semibold">${type.charAt(0).toUpperCase() + type.slice(1)}</h3>
+                </div>
+                <div class="p-4">${content}</div>
+                <div class="p-4 border-t border-gray-700 flex justify-end">
+                    <button class="py-2 px-4 bg-gray-600 rounded-lg text-white hover:bg-gray-700" onclick="closeModal()">Close</button>
+                </div>
+            `;
+        modal.style.display = 'flex';
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        document.addEventListener('keydown', function closeOnEsc(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+                document.removeEventListener('keydown', closeOnEsc);
+            }
+        });
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('modal');
+        modal.style.display = 'none';
+        document.getElementById('modal-content-inner').innerHTML = '';
+    }
+
+    // Filter Functionality
+    const statusFilter = document.getElementById('statusFilter');
+    const vehicleFilter = document.getElementById('vehicleFilter');
+    const searchInput = document.getElementById('searchInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const bookingCards = document.querySelectorAll('.booking-card');
+
+    function filterBookings() {
+        const statusValue = statusFilter.value;
+        const vehicleValue = vehicleFilter.value;
+        const searchValue = searchInput.value.toLowerCase();
+
+        bookingCards.forEach(card => {
+            const status = card.dataset.status;
+            const vehicle = card.dataset.vehicle.toLowerCase();
+            const text = card.textContent.toLowerCase();
+
+            const statusMatch = !statusValue || status === statusValue;
+            const vehicleMatch = !vehicleValue || vehicle.includes(vehicleValue.toLowerCase());
+            const searchMatch = !searchValue || text.includes(searchValue);
+
+            card.style.display = statusMatch && vehicleMatch && searchMatch ? 'block' : 'none';
+        });
+    }
+
+    statusFilter.addEventListener('change', filterBookings);
+    vehicleFilter.addEventListener('change', filterBookings);
+    searchBtn.addEventListener('click', filterBookings);
+    searchInput.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') filterBookings();
+    });
+
+    // View Receipt
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.view-receipt-btn')) {
+            e.preventDefault();
+            const btn = e.target.closest('.view-receipt-btn');
+            const card = btn.closest('.booking-card');
+            const bookingId = card.dataset.bookingId;
+            const userName = document.getElementById('user-name').textContent;
+            const vehicle = card.dataset.vehicle;
+            const location = card.dataset.location || 'N/A';
+            const slotId = card.dataset.slotId || 'N/A';
+            const startTime = card.dataset.startTime || 'N/A';
+            const duration = card.dataset.duration || 'Completed';
+
+            const entryTimeElement = card.querySelector('.entry-time');
+            const inTime = entryTimeElement ? entryTimeElement.textContent.trim() : 'Completed Session';
+
+            const exitTimeElement = card.querySelector('.exit-time');
+            const endTime = exitTimeElement ? exitTimeElement.textContent.trim() : 'Completed Session';
+
+            showModal(`
+                    <div class="text-center mb-6">
+                        <i class="fas fa-receipt text-green-400 text-4xl mb-3"></i>
+                        <h3 class="text-2xl font-bold text-green-400">Payment Receipt</h3>
+                        <p class="text-gray-400">Booking #${bookingId}</p>
+                    </div>
+                    <div class="bg-white text-black p-6 rounded-lg mx-4">
+                        <div class="text-center border-b pb-4 mb-4">
+                            <h2 class="text-xl font-bold text-blue-600">ParQHub</h2>
+                            <p class="text-sm text-gray-600">Parking Receipt</p>
+                        </div>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="font-medium">Receipt #:</span>
+                                <span>PQH-${bookingId}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-medium">Customer:</span>
+                                <span>${userName}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-medium">Vehicle:</span>
+                                <span>${vehicle}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-medium">Location:</span>
+                                <span>${location}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-medium">Slot:</span>
+                                <span>${slotId}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-medium">Start Time:</span>
+                                <span>${startTime}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-medium">Entry Time:</span>
+                                <span>${inTime}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-medium">Exit Time:</span>
+                                <span>${endTime}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-medium">Duration:</span>
+                                <span>${duration}</span>
+                            </div>
+                            <div class="border-t pt-2 mt-4">
+                                <div class="flex justify-between font-bold text-lg">
+                                    <span>Total Paid:</span>
+                                    <span class="text-green-600">Payment Completed</span>
+                                </div>
+                            </div>
+                            <div class="text-center mt-4 text-xs text-gray-500">
+                                <p>Thank you for using ParQHub!</p>
+                                <p>Generated on ${new Date().toLocaleString()}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-center gap-4 mt-6">
+                        <button onclick="downloadReceipt('${bookingId}')" class="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">
+                            <i class="fas fa-download mr-2"></i>Download PDF
+                        </button>
+                        <button onclick="closeModal()" class="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">
+                            Close
+                        </button>
+                    </div>
+                `, 'success');
+        }
+    });
+
+    // Download Receipt Function
+    function downloadReceipt(bookingId) {
+        console.log(`Downloading receipt for booking ${bookingId}`);
+        const link = document.createElement('a');
+        link.href = `/user/receipt/download/${bookingId}`;
+        link.download = `parqhub-receipt-${bookingId}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showModal('Receipt download started successfully!', 'success');
+        setTimeout(closeModal, 2000);
+    }
+
+    // View Details
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.view-details-btn')) {
+            e.preventDefault();
+            const btn = e.target.closest('.view-details-btn');
+            const card = btn.closest('.booking-card');
+
+            const bookingId = card.dataset.bookingId;
+            const userName = document.getElementById('user-name').textContent;
+            const vehicle = card.dataset.vehicle;
+            const status = card.dataset.status;
+            const location = card.dataset.location || 'N/A';
+            const slotId = card.dataset.slotId || 'N/A';
+            const startTime = card.dataset.startTime || 'N/A';
+            const duration = card.dataset.duration || 'Ongoing';
+
+            const entryTimeElement = card.querySelector('.entry-time');
+            const inTime = entryTimeElement ? entryTimeElement.textContent.trim() : 'Not Entered';
+
+            const exitTimeElement = card.querySelector('.exit-time');
+            const endTime = exitTimeElement ? exitTimeElement.textContent.trim() : 'Pending';
+
+            const statusBgClass = status === 'Pending' ? 'bg-yellow-500 text-yellow-900' :
+                status === 'Completed' ? 'bg-green-500 text-green-900' :
+                    'bg-red-500 text-red-900';
+
+            showModal(`
+                    <div class="text-center mb-4">
+                        <i class="fas fa-info-circle text-blue-400 text-3xl"></i>
+                        <h4 class="text-xl font-bold text-blue-400 mt-2">Booking Details</h4>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex justify-between p-3 bg-gray-800/50 rounded-lg">
+                            <span class="text-gray-400">Booking ID:</span>
+                            <span class="font-semibold text-white">${bookingId}</span>
+                        </div>
+                        <div class="flex justify-between p-3 bg-gray-800/50 rounded-lg">
+                            <span class="text-gray-400">Customer Name:</span>
+                            <span class="font-semibold text-white">${userName}</span>
+                        </div>
+                        <div class="flex justify-between p-3 bg-gray-800/50 rounded-lg">
+                            <span class="text-gray-400">Vehicle:</span>
+                            <span class="font-semibold text-white">${vehicle}</span>
+                        </div>
+                        <div class="flex justify-between p-3 bg-gray-800/50 rounded-lg">
+                            <span class="text-gray-400">Location:</span>
+                            <span class="font-semibold text-white">${location}</span>
+                        </div>
+                        <div class="flex justify-between p-3 bg-gray-800/50 rounded-lg">
+                            <span class="text-gray-400">Slot ID:</span>
+                            <span class="font-semibold text-white">${slotId}</span>
+                        </div>
+                        <div class="flex justify-between p-3 bg-gray-800/50 rounded-lg">
+                            <span class="text-gray-400">Start Time:</span>
+                            <span class="font-semibold text-white">${startTime}</span>
+                        </div>
+                        <div class="flex justify-between p-3 bg-gray-800/50 rounded-lg">
+                            <span class="text-gray-400">In Time:</span>
+                            <span class="font-semibold ${inTime === 'Not Entered' ? 'text-yellow-400' : 'text-green-400'}">${inTime}</span>
+                        </div>
+                        <div class="flex justify-between p-3 bg-gray-800/50 rounded-lg">
+                            <span class="text-gray-400">End Time:</span>
+                            <span class="font-semibold ${endTime === 'Pending' ? 'text-yellow-400' : 'text-green-400'}">${endTime}</span>
+                        </div>
+                        <div class="flex justify-between p-3 bg-gray-800/50 rounded-lg">
+                            <span class="text-gray-400">Duration:</span>
+                            <span class="font-semibold ${duration === 'Ongoing' ? 'text-yellow-400' : 'text-white'}">${duration}</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gray-800/50 rounded-lg">
+                            <span class="text-gray-400">Payment Status:</span>
+                            <span class="px-3 py-1 rounded-full text-xs font-medium ${statusBgClass}">${status}</span>
+                        </div>
+                    </div>
+                `, 'info');
+        }
+    });
+
+    // Fetch Entry Time for a Booking
+    async function fetchEntryTime(bookingId, entryTimeElement) {
+        console.log(`Fetching entry time for booking ${bookingId}`);
+        try {
+            const response = await fetch(`/user/log-entry-time?bookingId=${bookingId}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            const result = await response.json();
+            console.log(`Entry time response for booking ${bookingId}:`, result);
+            if (result.status === 'success') {
+                entryTimeElement.innerHTML = result.entryTime;
+                entryTimeElement.className = 'entry-time text-green-400';
+
+                const card = entryTimeElement.closest('.booking-card');
+                const statusElement = card.querySelector('.status-pending');
+                if (statusElement) {
+                    statusElement.textContent = 'Vehicle Entered';
+                    statusElement.className = 'status-completed px-3 py-1 rounded-full text-xs font-medium';
+                }
+            } else {
+                const card = entryTimeElement.closest('.booking-card');
+                const status = card.dataset.status;
+                if (status === 'Completed') {
+                    entryTimeElement.innerHTML = 'Completed Session';
+                    entryTimeElement.className = 'entry-time text-blue-400';
+                } else {
+                    entryTimeElement.innerHTML = 'Not Entered';
+                    entryTimeElement.className = 'entry-time text-yellow-400';
+                }
+            }
+        } catch (error) {
+            console.error(`Error fetching entry time for booking ${bookingId}:`, error);
+            const card = entryTimeElement.closest('.booking-card');
+            const status = card.dataset.status;
+            if (status === 'Completed') {
+                entryTimeElement.innerHTML = 'Completed Session';
+                entryTimeElement.className = 'entry-time text-blue-400';
+            } else {
+                entryTimeElement.innerHTML = 'Not Entered';
+                entryTimeElement.className = 'entry-time text-yellow-400';
+            }
+        }
+    }
+
+    // Fetch Exit Time for a Booking
+    async function fetchExitTime(bookingId, exitTimeElement) {
+        console.log(`Fetching exit time for booking ${bookingId}`);
+        try {
+            const response = await fetch(`/user/log-exit-time?bookingId=${bookingId}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            const result = await response.json();
+            console.log(`Exit time response for booking ${bookingId}:`, result);
+            if (result.status === 'success') {
+                exitTimeElement.innerHTML = result.exitTime;
+                exitTimeElement.className = 'exit-time text-green-400';
+            } else {
+                const card = exitTimeElement.closest('.booking-card');
+                const status = card.dataset.status;
+                if (status === 'Completed') {
+                    exitTimeElement.innerHTML = 'Completed Session';
+                    exitTimeElement.className = 'exit-time text-blue-400';
+                } else {
+                    exitTimeElement.innerHTML = 'Pending';
+                    exitTimeElement.className = 'exit-time text-yellow-400';
+                }
+            }
+        } catch (error) {
+            console.error(`Error fetching exit time for booking ${bookingId}:`, error);
+            const card = exitTimeElement.closest('.booking-card');
+            const status = card.dataset.status;
+            if (status === 'Completed') {
+                exitTimeElement.innerHTML = 'Completed Session';
+                exitTimeElement.className = 'exit-time text-blue-400';
+            } else {
+                exitTimeElement.innerHTML = 'Pending';
+                exitTimeElement.className = 'exit-time text-yellow-400';
+            }
+        }
+    }
+
+    // Log Entry/Exit
+    async function handleLogAction(bookingId, vehicleId, action) {
+        console.log(`Handling ${action} for booking ${bookingId}, vehicle ${vehicleId}`);
+        try {
+            const response = await fetch(`/user/log-${action}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Accept': 'application/json'
+                },
+                body: action === 'exit' ? `bookingId=${bookingId}` : `bookingId=${bookingId}&vehicleId=${vehicleId}`
+            });
+            const result = await response.json();
+            console.log(`${action} response for booking ${bookingId}:`, result);
+            if (result.status === 'success') {
+                showModal(`${action.charAt(0).toUpperCase() + action.slice(1)} logged successfully!`, 'success');
+
+                if (action === 'entry') {
+                    const card = document.querySelector(`[data-booking-id="${bookingId}"]`);
+                    const entryTimeElement = card.querySelector('.entry-time');
+                    await fetchEntryTime(bookingId, entryTimeElement);
+
+                    const statusElement = card.querySelector('.status-pending');
+                    if (statusElement) {
+                        statusElement.textContent = 'Vehicle Entered';
+                        statusElement.className = 'status-completed px-3 py-1 rounded-full text-xs font-medium';
+                    }
+                } else if (action === 'exit') {
+                    const card = document.querySelector(`[data-booking-id="${bookingId}"]`);
+                    const exitTimeElement = card.querySelector('.exit-time');
+                    await fetchExitTime(bookingId, exitTimeElement);
+
+                    const entryTimeElement = card.querySelector('.entry-time');
+                    if (entryTimeElement.innerHTML === 'Not Entered' || entryTimeElement.innerHTML === 'Completed Session') {
+                        await fetchEntryTime(bookingId, entryTimeElement);
+                    }
+
+                    setTimeout(() => {
+                        showModal(
+                            `Vehicle exit logged successfully!<br><br>
+                                <div class="text-center mt-4">
+                                    <button onclick="window.location.href='/user/payment-gateway?bookingId=${bookingId}'"
+                                            class="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition">
+                                        <i class="fas fa-credit-card mr-2"></i>Proceed to Payment
+                                    </button>
+                                </div>`,
+                            'success'
+                        );
+                    }, 1500);
+                }
+            } else {
+                showModal(result.message || `Failed to log ${action}. Please try again.`, 'error');
+            }
+        } catch (error) {
+            console.error(`Error logging ${action} for booking ${bookingId}:`, error);
+            showModal(`Failed to log ${action}. Please try again.`, 'error');
+        }
+    }
+
+    // Confirmation Modal Functions
+    function showConfirmationModal(title, message, onConfirm, onCancel = null) {
+        const modal = document.getElementById('modal');
+        const modalContent = document.getElementById('modal-content-inner');
+
+        modalContent.innerHTML = `
+                <div class="bg-blue-500 text-white p-4 rounded-t-lg">
+                    <h3 class="text-lg font-semibold flex items-center">
+                        <i class="fas fa-question-circle mr-2"></i>${title}
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <p class="text-gray-300 mb-6">${message}</p>
+                    <div class="flex justify-end gap-4">
+                        <button id="modal-cancel" class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
+                            <i class="fas fa-times mr-2"></i>Cancel
+                        </button>
+                        <button id="modal-confirm" class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+                            <i class="fas fa-check mr-2"></i>Confirm
+                        </button>
+                    </div>
+                </div>
+            `;
+
+        modal.style.display = 'flex';
+
+        document.getElementById('modal-confirm').addEventListener('click', () => {
+            closeModal();
+            if (onConfirm) onConfirm();
+        });
+
+        document.getElementById('modal-cancel').addEventListener('click', () => {
+            closeModal();
+            if (onCancel) onCancel();
+        });
+
+        const escapeHandler = (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+                if (onCancel) onCancel();
+                document.removeEventListener('keydown', escapeHandler);
+            }
+        };
+        document.addEventListener('keydown', escapeHandler);
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+                if (onCancel) onCancel();
+            }
+        });
+    }
+
+    // In Button
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.log-in-btn')) {
+            e.preventDefault();
+            const btn = e.target.closest('.log-in-btn');
+            const bookingId = btn.dataset.bookingId;
+            const card = btn.closest('.booking-card');
+            const vehicle = card.dataset.vehicle;
+
+            console.log(`In button clicked for booking ${bookingId}`);
+
+            showConfirmationModal(
+                'Confirm Vehicle Entry',
+                `Are you sure you want to log entry for <strong>${vehicle}</strong>?<br><br>This will record the current time as your parking entry time.`,
+                () => {
+                    const vehicleId = btn.dataset.vehicleId;
+                    handleLogAction(bookingId, vehicleId, 'entry');
+                }
+            );
+        }
+    });
+
+    // Out Button
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.log-out-btn')) {
+            e.preventDefault();
+            const btn = e.target.closest('.log-out-btn');
+            const bookingId = btn.dataset.bookingId;
+            const card = btn.closest('.booking-card');
+            const vehicle = card.dataset.vehicle;
+
+            console.log(`Out button clicked for booking ${bookingId}`);
+
+            showConfirmationModal(
+                'Confirm Vehicle Exit',
+                `Are you sure you want to log exit for <strong>${vehicle}</strong>?<br><br>This will record the current time as your parking exit time and prepare the booking for payment.`,
+                () => {
+                    const vehicleId = btn.dataset.vehicleId;
+                    handleLogAction(bookingId, vehicleId, 'exit');
+                }
+            );
+        }
+    });
+
+    // Pay Now Button
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.pay-now-btn')) {
+            e.preventDefault();
+            const btn = e.target.closest('.pay-now-btn');
+            const bookingId = btn.dataset.bookingId;
+            console.log(`Pay Now button clicked for booking ${bookingId}`);
+            window.location.href = `/user/payment-gateway?bookingId=${bookingId}`;
+        }
+    });
+
+    // Check VehicleLog Status on Page Load
+    async function checkVehicleLogStatus() {
+        console.log('Checking vehicle log status for all bookings');
+        const bookingCards = document.querySelectorAll('.booking-card');
+
+        const promises = Array.from(bookingCards).map(async (card) => {
+            const bookingId = card.dataset.bookingId;
+            const entryTimeElement = card.querySelector('.entry-time');
+            const exitTimeElement = card.querySelector('.exit-time');
+            const status = card.dataset.status;
+
+            if (status === 'Pending') {
+                await fetchEntryTime(bookingId, entryTimeElement);
+                exitTimeElement.innerHTML = 'Pending';
+                exitTimeElement.className = 'exit-time text-yellow-400';
+            } else if (status === 'Completed') {
+                await Promise.all([
+                    fetchEntryTime(bookingId, entryTimeElement),
+                    fetchExitTime(bookingId, exitTimeElement)
+                ]);
+            } else {
+                entryTimeElement.innerHTML = 'Not Entered';
+                entryTimeElement.className = 'entry-time text-yellow-400';
+                exitTimeElement.innerHTML = 'Pending';
+                exitTimeElement.className = 'exit-time text-yellow-400';
+            }
+        });
+
+        await Promise.all(promises);
+        console.log('All vehicle log status checks completed');
+    }
+
+    // Run check on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        checkVehicleLogStatus();
+    });
+
+    // Debug: Log all fetch requests
+    const originalFetch = window.fetch;
+    window.fetch = async function(...args) {
+        console.log('Fetch called with:', args[0]);
+        return originalFetch.apply(this, args);
+    };
+</script>
+</body>
+</html>

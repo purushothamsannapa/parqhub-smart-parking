@@ -1,0 +1,9 @@
+# 🚗 ParQHub - Smart Parking Management System
+
+Please refer to [README.md](README.md) for the complete, official project documentation, architecture guide, and execution steps.
+
+### Quick Start
+- Run Application: `.\mvnw.cmd spring-boot:run`
+- Run Tests: `.\mvnw.cmd test`
+- Web Portal: http://localhost:8080/
+- Database Setup: Located in `database/schema.sql` and `database/seed.sql`

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParQHub - Admin Tables</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #0a0f1c; }
+        .glass {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .active {
+            background: linear-gradient(90deg, #ffb703, #ff6600);
+            color: #0a0f1c !important;
+            font-weight: bold;
+        }
+        .table-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(255, 183, 3, 0.2);
+        }
+    </style>
+</head>
+<body class="text-white flex">
+
+<!-- Sidebar -->
+<aside class="w-72 h-screen glass flex flex-col fixed">
+    <div class="p-6 flex items-center gap-3 border-b border-gray-700">
+        <img src="/images/logo.svg" alt="ParQHub" class="h-10">
+        <span class="text-2xl font-bold">ParQHub</span>
+    </div>
+    <nav class="flex-1 p-4 space-y-2">
+        <!-- Common Links for All Roles -->
+        <a href="/admin/dashboard" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 transition"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="/admin/tables" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 transition active"><i class="fas fa-table"></i> Table View</a>
+        <a href="/admin/parking-viewer" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 transition"><i class="fas fa-parking"></i> Parking Viewer</a>
+        <a href="/admin/reports" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-chart-bar"></i> Report View</a>
+
+        <!-- Role-based Links -->
+        <div th:if="${adminRole.name() == 'OPERATIONS_MANAGER'}">
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-parking"></i> Slot Availability</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-user-cog"></i> Staff Assignment</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-chart-line"></i> Performance Summaries</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-tachometer-alt"></i> Live Slot Usage</a>
+        </div>
+        <div th:if="${adminRole.name() == 'CUSTOMER_SERVICE_OFFICER'}">
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-ticket-alt"></i> Booking Details</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-exclamation-triangle"></i> Incident Logging</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-bell"></i> System Alerts</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-history"></i> Complaint History</a>
+        </div>
+        <div th:if="${adminRole.name() == 'IT_SUPPORT'}">
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-cogs"></i> Backend Configurations</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-server"></i> System Uptime</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-key"></i> Password Reset</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-bug"></i> Error Logs</a>
+        </div>
+        <div th:if="${adminRole.name() == 'FINANCE_OFFICER'}">
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-file-invoice-dollar"></i> Financial Reports</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-history"></i> Transaction History</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-chart-pie"></i> Revenue Breakdown</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-file-export"></i> Export Reports</a>
+        </div>
+        <div th:if="${adminRole.name() == 'SECURITY_SUPERVISOR'}">
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-car"></i> Vehicle Registration</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-bell"></i> Overstay Alerts</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-flag"></i> Unauthorized Vehicles</a>
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30"><i class="fas fa-clipboard-list"></i> Vehicle Movement Logs</a>
+        </div>
+        <div th:if="${adminRole.name() == 'SUPER_ADMIN'}">
+            <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-400/30 font-bold"><i class="fas fa-crown"></i> Super Admin Panel</a>
+        </div>
+    </nav>
+    <div class="p-4 border-t border-gray-700">
+        <a th:href="@{/admin/logout}" class="flex items-center gap-3 p-3 rounded-lg hover:bg-red-500/30 text-red-400"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+</aside>
+
+<!-- Main Content -->
+<main class="ml-72 w-full p-6">
+    <!-- Top bar -->
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">Table Management</h1>
+        <div class="flex items-center gap-4">
+            <span class="text-gray-300">Welcome, <span th:text="${adminName}">Admin</span></span>
+            <img src="/images/admin-avatar.png" alt="Admin" class="h-10 w-10 rounded-full border-2 border-yellow-400">
+        </div>
+    </div>
+
+    <!-- Table Management Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+
+        <!-- Admins Table -->
+        <div class="glass p-6 rounded-2xl hover:bg-yellow-400/10 transition cursor-pointer table-card" onclick="navigateToTable('admins')" role="button" aria-label="Manage Admins">
+            <div class="flex items-center justify-between mb-4">
+                <i class="fas fa-user-shield text-yellow-400 text-3xl"></i>
+                <span class="text-sm text-yellow-400 font-semibold">Manage</span>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">Admins</h3>
+            <p class="text-gray-400 text-sm">Manage admin accounts and permissions</p>
+        </div>
+
+        <!-- Bookings Table -->
+        <div class="glass p-6 rounded-2xl hover:bg-yellow-400/10 transition cursor-pointer table-card" onclick="navigateToTable('booking')" role="button" aria-label="Manage Bookings">
+            <div class="flex items-center justify-between mb-4">
+                <i class="fas fa-calendar-check text-blue-400 text-3xl"></i>
+                <span class="text-sm text-yellow-400 font-semibold">Manage</span>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">Bookings</h3>
+            <p class="text-gray-400 text-sm">View and manage parking bookings</p>
+        </div>
+
+        <!-- Notifications Table -->
+        <div class="glass p-6 rounded-2xl hover:bg-yellow-400/10 transition cursor-pointer table-card" onclick="navigateToTable('notification')" role="button" aria-label="Manage Notifications">
+            <div class="flex items-center justify-between mb-4">
+                <i class="fas fa-bell text-red-400 text-3xl"></i>
+                <span class="text-sm text-yellow-400 font-semibold">Manage</span>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">Notifications</h3>
+            <p class="text-gray-400 text-sm">Manage system notifications</p>
+        </div>
+
+        <!-- Parking Lots Table -->
+        <div class="glass p-6 rounded-2xl hover:bg-yellow-400/10 transition cursor-pointer table-card" onclick="navigateToTable('parkinglot')" role="button" aria-label="Manage Parking Lots">
+            <div class="flex items-center justify-between mb-4">
+                <i class="fas fa-parking text-green-400 text-3xl"></i>
+                <span class="text-sm text-yellow-400 font-semibold">Manage</span>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">Parking Lots</h3>
+            <p class="text-gray-400 text-sm">Manage parking lot locations</p>
+        </div>
+
+        <!-- Parking Slots Table -->
+        <div class="glass p-6 rounded-2xl hover:bg-yellow-400/10 transition cursor-pointer table-card" onclick="navigateToTable('parkingslot')" role="button" aria-label="Manage Parking Slots">
+            <div class="flex items-center justify-between mb-4">
+                <i class="fas fa-square text-purple-400 text-3xl"></i>
+                <span class="text-sm text-yellow-400 font-semibold">Manage</span>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">Parking Slots</h3>
+            <p class="text-gray-400 text-sm">Manage individual parking slots</p>
+        </div>
+
+        <!-- Payments Table -->
+        <div class="glass p-6 rounded-2xl hover:bg-yellow-400/10 transition cursor-pointer table-card" onclick="navigateToTable('payment')" role="button" aria-label="Manage Payments">
+            <div class="flex items-center justify-between mb-4">
+                <i class="fas fa-credit-card text-yellow-400 text-3xl"></i>
+                <span class="text-sm text-yellow-400 font-semibold">Manage</span>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">Payments</h3>
+            <p class="text-gray-400 text-sm">View payment transactions</p>
+        </div>
+
+        <!-- Users Table -->
+        <div class="glass p-6 rounded-2xl hover:bg-yellow-400/10 transition cursor-pointer table-card" onclick="navigateToTable('users')" role="button" aria-label="Manage Users">
+            <div class="flex items-center justify-between mb-4">
+                <i class="fas fa-users text-blue-400 text-3xl"></i>
+                <span class="text-sm text-yellow-400 font-semibold">Manage</span>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">Users</h3>
+            <p class="text-gray-400 text-sm">Manage user accounts</p>
+        </div>
+
+        <!-- Vehicles Table -->
+        <div class="glass p-6 rounded-2xl hover:bg-yellow-400/10 transition cursor-pointer table-card" onclick="navigateToTable('vehicle')" role="button" aria-label="Manage Vehicles">
+            <div class="flex items-center justify-between mb-4">
+                <i class="fas fa-car text-orange-400 text-3xl"></i>
+                <span class="text-sm text-yellow-400 font-semibold">Manage</span>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">Vehicles</h3>
+            <p class="text-gray-400 text-sm">Manage registered vehicles</p>
+        </div>
+
+        <!-- Vehicle Logs Table -->
+        <div class="glass p-6 rounded-2xl hover:bg-yellow-400/10 transition cursor-pointer table-card" onclick="navigateToTable('vehiclelog')" role="button" aria-label="Manage Vehicle Logs">
+            <div class="flex items-center justify-between mb-4">
+                <i class="fas fa-clipboard-list text-indigo-400 text-3xl"></i>
+                <span class="text-sm text-yellow-400 font-semibold">Manage</span>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">Vehicle Logs</h3>
+            <p class="text-gray-400 text-sm">View vehicle movement logs</p>
+        </div>
+
+        <!-- Reports Table -->
+        <div class="glass p-6 rounded-2xl hover:bg-yellow-400/10 transition cursor-pointer table-card" onclick="navigateToTable('report')" role="button" aria-label="Manage Reports">
+            <div class="flex items-center justify-between mb-4">
+                <i class="fas fa-chart-bar text-pink-400 text-3xl"></i>
+                <span class="text-sm text-yellow-400 font-semibold">View</span>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">Reports</h3>
+            <p class="text-gray-400 text-sm">Generate and view reports</p>
+        </div>
+
+    </div>
+</main>
+
+<script>
+    function navigateToTable(tableName) {
+        window.location.href = `/admin/tables/${tableName}`;
+    }
+</script>
+
+</body>
+</html>

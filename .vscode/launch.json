@@ -1,0 +1,13 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "ParqHubApplication (Run / Debug)",
+            "request": "launch",
+            "mainClass": "com.prmplatform.parqhub.ParqHubApplication",
+            "projectName": "parqHub",
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
